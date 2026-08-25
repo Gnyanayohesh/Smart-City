@@ -128,7 +128,6 @@ function renderHeader(pageTitle = "", basePath = "/", isAdmin = false) {
 /* Embedded Styles to ensure 100% reliable rendering anywhere */
 ${cachedCss}
 
-/* Enhanced font & modern aesthetics */
 body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
@@ -142,8 +141,31 @@ body {
     border: 2px dashed var(--green-500);
 }
 .hero {
-    background: linear-gradient(135deg, #104c35 0%, #1a6b4a 50%, #2ba86f 100%);
-    box-shadow: inset 0 -20px 30px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 20%, #15573e 0%, #0c3525 100%);
+    color: var(--white);
+    padding: 85px 0 75px;
+    text-align: center;
+}
+.hero .container {
+    position: relative;
+    z-index: 10;
+}
+.soft-aurora-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.85;
+}
+.soft-aurora-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
 }
 .stats-bar {
     border: 1px solid rgba(0,0,0,0.06);
@@ -215,101 +237,6 @@ function renderFooter() {
     </div>
 </footer>
 <script src="/assets/js/script.js"></script>
-<script>
-// TextCursor Broom Trail (React Bits adapted for Vanilla/SSR)
-(function() {
-    const text = '🧹';
-    const spacing = 40;
-    const maxPoints = 8;
-    const exitDuration = 350;
-    const removalInterval = 30;
-    const followMouseDirection = true;
-    const randomFloat = true;
-
-    let trail = [];
-    let lastMoveTime = Date.now();
-    let idCounter = 0;
-
-    const container = document.createElement('div');
-    container.className = 'text-cursor-container';
-    container.innerHTML = '<div class="text-cursor-inner"></div>';
-    document.body.appendChild(container);
-    const inner = container.querySelector('.text-cursor-inner');
-
-    function createRandomData() {
-        if (!randomFloat) return { rx: 0, ry: 0, rr: 0 };
-        return {
-            rx: Math.random() * 8 - 4,
-            ry: Math.random() * 8 - 4,
-            rr: Math.random() * 12 - 6
-        };
-    }
-
-    function addPoint(x, y, angle) {
-        const rand = createRandomData();
-        const id = 'tc_' + (idCounter++);
-        const el = document.createElement('div');
-        el.id = id;
-        el.className = 'text-cursor-item';
-        el.textContent = text;
-        el.style.left = (x + rand.rx) + 'px';
-        el.style.top = (y + rand.ry) + 'px';
-        el.style.transform = 'translate(-50%, -50%) rotate(' + (angle + rand.rr) + 'deg) scale(1)';
-        el.style.opacity = '1';
-        el.style.transition = 'opacity ' + exitDuration + 'ms ease-out, transform ' + exitDuration + 'ms ease-out';
-        inner.appendChild(el);
-
-        trail.push({ id, el, x, y, angle, time: Date.now() });
-
-        if (trail.length > maxPoints) {
-            removePoint(trail.shift());
-        }
-    }
-
-    function removePoint(item) {
-        if (!item || !item.el) return;
-        item.el.style.opacity = '0';
-        item.el.style.transform += ' scale(0.2)';
-        setTimeout(function() {
-            if (item.el && item.el.parentNode) {
-                item.el.parentNode.removeChild(item.el);
-            }
-        }, exitDuration);
-    }
-
-    window.addEventListener('mousemove', function(e) {
-        const mouseX = e.clientX;
-        const mouseY = e.clientY;
-
-        if (trail.length === 0) {
-            addPoint(mouseX, mouseY, 0);
-        } else {
-            const last = trail[trail.length - 1];
-            const dx = mouseX - last.x;
-            const dy = mouseY - last.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance >= spacing) {
-                const rawAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
-                const angle = followMouseDirection ? rawAngle : 0;
-                const steps = Math.floor(distance / spacing);
-
-                for (let i = 1; i <= steps; i++) {
-                    const t = (spacing * i) / distance;
-                    addPoint(last.x + dx * t, last.y + dy * t, angle);
-                }
-            }
-        }
-        lastMoveTime = Date.now();
-    });
-
-    setInterval(function() {
-        if (Date.now() - lastMoveTime > 75 && trail.length > 0) {
-            removePoint(trail.shift());
-        }
-    }, removalInterval);
-})();
-</script>
 </body>
 </html>`;
 }
@@ -415,6 +342,7 @@ const server = http.createServer((req, res) => {
 
         const html = renderHeader("Home", "/", isAdmin) + `
 <section class="hero">
+    <div id="auroraBg" class="soft-aurora-container"></div>
     <div class="container">
         <h1>Keep Our City Clean, Together</h1>
         <p>Spot an unclean public area? Report it in seconds &mdash; with a photo and location &mdash; and track how the municipal team resolves it.</p>
@@ -838,24 +766,6 @@ function previewImage(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
-document.getElementById('geoBtn')?.addEventListener('click', function() {
-    const status = document.getElementById('geoStatus');
-    if (!navigator.geolocation) {
-        status.textContent = 'Geolocation is not supported by your browser.';
-        return;
-    }
-    status.textContent = 'Locating...';
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            document.getElementById('latitude').value = pos.coords.latitude;
-            document.getElementById('longitude').value = pos.coords.longitude;
-            status.textContent = '✓ GPS captured (' + pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4) + ')';
-        },
-        err => {
-            status.textContent = 'Could not get location: ' + err.message;
-        }
-    );
-});
 </script>
 ` + renderFooter();
 }
