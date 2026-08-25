@@ -1,6 +1,8 @@
 <?php if (session_status() === PHP_SESSION_NONE) session_start(); 
 $currentPage = basename($_SERVER['PHP_SELF']);
 $currentDir = basename(dirname($_SERVER['PHP_SELF']));
+$role = isset($_SESSION['role']) ? $_SESSION['role'] : (isset($_SESSION['admin_id']) ? 'admin' : null);
+$userFullName = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,11 +29,18 @@ $currentDir = basename(dirname($_SERVER['PHP_SELF']));
                         <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>index.php" class="pill <?php echo ($currentPage === 'index.php') ? 'is-active' : ''; ?>">Home</a></li>
                         <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>report.php" class="pill <?php echo ($currentPage === 'report.php') ? 'is-active' : ''; ?>">Report Issue</a></li>
                         <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>dashboard.php" class="pill <?php echo ($currentPage === 'dashboard.php') ? 'is-active' : ''; ?>">Public Dashboard</a></li>
-                        <?php if (isset($_SESSION['admin_id'])): ?>
-                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/dashboard.php" class="pill <?php echo ($currentDir === 'admin' && $currentPage === 'dashboard.php') ? 'is-active' : ''; ?>">Admin Panel</a></li>
-                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/logout.php" class="pill nav-logout-pill">Logout</a></li>
+                        
+                        <?php if ($role === 'admin'): ?>
+                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/dashboard.php" class="pill <?php echo ($currentDir === 'admin' && $currentPage === 'dashboard.php') ? 'is-active' : ''; ?>">👑 Admin Panel</a></li>
+                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>logout.php" class="pill nav-logout-pill">Logout</a></li>
+                        <?php elseif ($role === 'cleaner'): ?>
+                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>cleaner.php" class="pill <?php echo ($currentPage === 'cleaner.php') ? 'is-active' : ''; ?>">🧹 Cleaner Portal</a></li>
+                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>logout.php" class="pill nav-logout-pill">Logout (Cleaner)</a></li>
+                        <?php elseif ($role === 'user'): ?>
+                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>dashboard.php" class="pill">👤 <?php echo htmlspecialchars($userFullName ?: 'Citizen'); ?></a></li>
+                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>logout.php" class="pill nav-logout-pill">Logout</a></li>
                         <?php else: ?>
-                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/login.php" class="pill <?php echo ($currentPage === 'login.php') ? 'is-active' : ''; ?>">Admin Login</a></li>
+                            <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>login.php" class="pill <?php echo ($currentPage === 'login.php') ? 'is-active' : ''; ?>">Login</a></li>
                         <?php endif; ?>
                     </ul>
                 </div>
@@ -45,11 +54,16 @@ $currentDir = basename(dirname($_SERVER['PHP_SELF']));
                     <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>index.php" class="mobile-menu-link <?php echo ($currentPage === 'index.php') ? 'is-active' : ''; ?>">Home</a></li>
                     <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>report.php" class="mobile-menu-link <?php echo ($currentPage === 'report.php') ? 'is-active' : ''; ?>">Report Issue</a></li>
                     <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>dashboard.php" class="mobile-menu-link <?php echo ($currentPage === 'dashboard.php') ? 'is-active' : ''; ?>">Public Dashboard</a></li>
-                    <?php if (isset($_SESSION['admin_id'])): ?>
-                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/dashboard.php" class="mobile-menu-link <?php echo ($currentDir === 'admin' && $currentPage === 'dashboard.php') ? 'is-active' : ''; ?>">Admin Panel</a></li>
-                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/logout.php" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout</a></li>
+                    <?php if ($role === 'admin'): ?>
+                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/dashboard.php" class="mobile-menu-link <?php echo ($currentDir === 'admin' && $currentPage === 'dashboard.php') ? 'is-active' : ''; ?>">👑 Admin Panel</a></li>
+                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>logout.php" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout</a></li>
+                    <?php elseif ($role === 'cleaner'): ?>
+                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>cleaner.php" class="mobile-menu-link <?php echo ($currentPage === 'cleaner.php') ? 'is-active' : ''; ?>">🧹 Cleaner Portal</a></li>
+                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>logout.php" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout (Cleaner)</a></li>
+                    <?php elseif ($role === 'user'): ?>
+                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>logout.php" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout (<?php echo htmlspecialchars($userFullName ?: 'Citizen'); ?>)</a></li>
                     <?php else: ?>
-                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>admin/login.php" class="mobile-menu-link <?php echo ($currentPage === 'login.php') ? 'is-active' : ''; ?>">Admin Login</a></li>
+                        <li><a href="<?php echo isset($basePath) ? $basePath : ''; ?>login.php" class="mobile-menu-link <?php echo ($currentPage === 'login.php') ? 'is-active' : ''; ?>">Login</a></li>
                     <?php endif; ?>
                 </ul>
             </div>

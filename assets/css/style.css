@@ -633,11 +633,95 @@ table.admin-table .desc-cell { max-width: 240px; }
 
 .login-wrap {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 200px);
-    padding: 40px 0;
+    padding: 50px 20px;
 }
+
+/* ---------- Multi-Role Login Styles ---------- */
+.role-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+@media (max-width: 768px) {
+    .role-cards-grid { grid-template-columns: 1fr; }
+}
+
+.role-badge-card {
+    background: #f8faf9;
+    border: 2px solid rgba(15, 61, 46, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.role-badge-card:hover, .role-badge-card.is-selected {
+    border-color: var(--green-500);
+    background: var(--white);
+    box-shadow: 0 6px 18px rgba(43, 168, 111, 0.15);
+    transform: translateY(-2px);
+}
+.role-badge-card .role-icon { font-size: 2rem; margin-bottom: 6px; }
+.role-badge-card .role-title { font-weight: 800; color: var(--green-900); font-size: 0.95rem; margin-bottom: 4px; }
+.role-badge-card .role-privilege { font-size: 0.78rem; color: var(--gray-700); line-height: 1.4; }
+.role-badge-card .role-creds {
+    font-size: 0.72rem;
+    background: rgba(15, 61, 46, 0.07);
+    color: var(--green-900);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    margin-top: 8px;
+    display: inline-block;
+}
+
+.quick-login-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--gray-300);
+}
+
+/* ---------- Cleaner Portal ---------- */
+.cleaner-header-banner {
+    background: linear-gradient(135deg, var(--green-900) 0%, #175e44 100%);
+    color: var(--white);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 10px 30px rgba(15, 61, 46, 0.2);
+}
+.cleaner-header-banner h2 { margin: 0 0 6px; font-size: 1.6rem; color: var(--white); }
+.cleaner-header-banner p { margin: 0; opacity: 0.9; font-size: 0.95rem; }
+
+.cleaner-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.cleaner-action-btn:hover { transform: translateY(-1px); }
+.cleaner-btn-progress { background: var(--blue-100); color: var(--blue-500); border: 1px solid var(--blue-500); }
+.cleaner-btn-clean { background: #def7ec; color: #03543f; border: 1px solid #31c48d; }
 
 @media (max-width: 700px) {
     .admin-shell { flex-direction: column; }

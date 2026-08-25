@@ -1,4 +1,27 @@
 {
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "admin",
+      "full_name": "Municipal Administrator"
+    },
+    {
+      "id": 2,
+      "username": "cleaner",
+      "password_hash": "6924b11f32a58b6cb061cc0802c6fe9c882ce99778dd2810a95dd526bc591c2b",
+      "role": "cleaner",
+      "full_name": "Sanitation Staff (Ramesh)"
+    },
+    {
+      "id": 3,
+      "username": "user",
+      "password_hash": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+      "role": "user",
+      "full_name": "Citizen (Yohesh)"
+    }
+  ],
   "admins": [
     {
       "admin_id": 1,
@@ -12,11 +35,11 @@
       "report_id": 4,
       "reporter_name": "yogi",
       "reporter_contact": "",
-      "description": "Ekash pooped",
-      "location_area": "joseph college",
+      "description": "Cleanliness spot near college",
+      "location_area": "Joseph College Ground, Trichy",
       "latitude": null,
       "longitude": null,
-      "photo_path": "uploads/report_1787634850246_7794.png",
+      "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
       "status": "Pending",
       "submitted_at": "2026-08-25T05:14:10.252Z"
     },

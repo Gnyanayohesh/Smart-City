@@ -1,15 +1,100 @@
+// Smart City Cleanliness Reporting System
+// Node.js Backend Server with Multi-Role Authentication, WebGL SoftAurora, and TiltedCards
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
-const querystring = require('querystring');
 const crypto = require('crypto');
+const querystring = require('querystring');
 
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'database', 'data.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const CSS_FILE = path.join(__dirname, 'assets', 'css', 'style.css');
 
+// Ensure directories exist
+if (!fs.existsSync(path.dirname(DATA_FILE))) {
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+}
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Initial Sample Data with 3 Roles (admin, cleaner, user)
+const defaultData = {
+    users: [
+        {
+            id: 1,
+            username: "admin",
+            password_hash: crypto.createHash('sha256').update('admin123').digest('hex'),
+            role: "admin",
+            full_name: "Municipal Administrator"
+        },
+        {
+            id: 2,
+            username: "cleaner",
+            password_hash: crypto.createHash('sha256').update('cleaner123').digest('hex'),
+            role: "cleaner",
+            full_name: "Sanitation Staff (Ramesh)"
+        },
+        {
+            id: 3,
+            username: "user",
+            password_hash: crypto.createHash('sha256').update('user123').digest('hex'),
+            role: "user",
+            full_name: "Citizen (Yohesh)"
+        }
+    ],
+    admins: [
+        {
+            admin_id: 1,
+            username: "admin",
+            password_hash: crypto.createHash('sha256').update('admin123').digest('hex'),
+            full_name: "Municipal Administrator"
+        }
+    ],
+    reports: [
+        {
+            report_id: 1,
+            reporter_name: "Ravi Kumar",
+            reporter_contact: "9876543210",
+            description: "Large pile of garbage near the bus stop, attracting stray animals.",
+            location_area: "Anna Nagar Bus Stop, Trichy",
+            latitude: 10.8231,
+            longitude: 78.6869,
+            photo_path: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
+            status: "Pending",
+            submitted_at: new Date(Date.now() - 86400000 * 2).toISOString()
+        },
+        {
+            report_id: 2,
+            reporter_name: "Priya S",
+            reporter_contact: "9123456780",
+            description: "Overflowing dustbin at the park entrance for the past 3 days.",
+            location_area: "Gandhi Park, Trichy",
+            latitude: 10.7905,
+            longitude: 78.7047,
+            photo_path: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&auto=format&fit=crop&q=60",
+            status: "In Progress",
+            submitted_at: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+            report_id: 3,
+            reporter_name: "Mohammed Ali",
+            reporter_contact: "9988776655",
+            description: "Drainage blockage causing waste water to spread on the road.",
+            location_area: "Cantonment Area, Trichy",
+            latitude: 10.8155,
+            longitude: 78.6892,
+            photo_path: "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=500&auto=format&fit=crop&q=60",
+            status: "Cleaned",
+            submitted_at: new Date(Date.now() - 86400000 * 3).toISOString()
+        }
+    ]
+};
+
+// Cached CSS
 let cachedCss = "";
 try {
     if (fs.existsSync(CSS_FILE)) {
@@ -19,87 +104,33 @@ try {
     console.error("Could not read CSS file:", e);
 }
 
-if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
-// Initial sample data if data.json doesn't exist
-function getInitialData() {
-    return {
-        admins: [
-            {
-                admin_id: 1,
-                username: "admin",
-                password_hash: crypto.createHash('sha256').update('admin123').digest('hex'),
-                full_name: "Municipal Administrator"
-            }
-        ],
-        reports: [
-            {
-                report_id: 1,
-                reporter_name: "Ravi Kumar",
-                reporter_contact: "9876543210",
-                description: "Large pile of garbage near the bus stop, attracting stray animals.",
-                location_area: "Anna Nagar Bus Stop, Trichy",
-                latitude: 10.8231,
-                longitude: 78.6869,
-                photo_path: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
-                status: "Pending",
-                submitted_at: new Date(Date.now() - 86400000 * 2).toISOString()
-            },
-            {
-                report_id: 2,
-                reporter_name: "Priya S",
-                reporter_contact: "9123456780",
-                description: "Overflowing dustbin at the park entrance for the past 3 days.",
-                location_area: "Gandhi Park, Trichy",
-                latitude: 10.7905,
-                longitude: 78.7047,
-                photo_path: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&auto=format&fit=crop&q=60",
-                status: "In Progress",
-                submitted_at: new Date(Date.now() - 86400000 * 1).toISOString()
-            },
-            {
-                report_id: 3,
-                reporter_name: "Mohammed Ali",
-                reporter_contact: "9988776655",
-                description: "Drainage blockage causing waste water to spread on the road.",
-                location_area: "Cantonment Area, Trichy",
-                latitude: 10.8155,
-                longitude: 78.6892,
-                photo_path: "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=500&auto=format&fit=crop&q=60",
-                status: "Cleaned",
-                submitted_at: new Date(Date.now() - 86400000 * 3).toISOString()
-            }
-        ]
-    };
-}
-
 function loadData() {
     try {
         if (fs.existsSync(DATA_FILE)) {
-            return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+            const raw = fs.readFileSync(DATA_FILE, 'utf8');
+            const data = JSON.parse(raw);
+            if (!data.users || data.users.length === 0) {
+                data.users = defaultData.users;
+            }
+            return data;
         }
     } catch (e) {
         console.error("Error reading data file:", e);
     }
-    const init = getInitialData();
-    saveData(init);
-    return init;
+    fs.writeFileSync(DATA_FILE, JSON.stringify(defaultData, null, 2), 'utf8');
+    return defaultData;
 }
 
 function saveData(data) {
     try {
-        const dbDir = path.dirname(DATA_FILE);
-        if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
     } catch (e) {
         console.error("Error writing data file:", e);
     }
 }
 
-// In-memory sessions
-const sessions = new Set();
+// In-memory multi-role sessions: Map(sessionId -> userObj)
+const sessions = new Map();
 
 function parseCookies(req) {
     const list = {};
@@ -113,7 +144,18 @@ function parseCookies(req) {
     return list;
 }
 
-function renderHeader(pageTitle = "", basePath = "/", isAdmin = false, currentPath = "/") {
+function getCurrentUser(req) {
+    const cookies = parseCookies(req);
+    if (cookies.session_id && sessions.has(cookies.session_id)) {
+        return sessions.get(cookies.session_id);
+    }
+    return null;
+}
+
+function renderHeader(pageTitle = "", basePath = "/", currentUser = null, currentPath = "/") {
+    const role = currentUser ? currentUser.role : null;
+    const userName = currentUser ? currentUser.full_name : '';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -147,10 +189,17 @@ body {
                         <li><a href="/" class="pill ${currentPath === '/' ? 'is-active' : ''}">Home</a></li>
                         <li><a href="/report" class="pill ${currentPath === '/report' ? 'is-active' : ''}">Report Issue</a></li>
                         <li><a href="/dashboard" class="pill ${currentPath === '/dashboard' ? 'is-active' : ''}">Public Dashboard</a></li>
-                        ${isAdmin 
-                            ? `<li><a href="/admin/dashboard" class="pill ${currentPath.startsWith('/admin/dashboard') ? 'is-active' : ''}">Admin Panel</a></li>
-                               <li><a href="/admin/logout" class="pill nav-logout-pill">Logout</a></li>`
-                            : `<li><a href="/admin/login" class="pill ${currentPath.startsWith('/admin') ? 'is-active' : ''}">Admin Login</a></li>`
+                        
+                        ${role === 'admin'
+                            ? `<li><a href="/admin/dashboard" class="pill ${currentPath.startsWith('/admin') ? 'is-active' : ''}">👑 Admin Panel</a></li>
+                               <li><a href="/logout" class="pill nav-logout-pill">Logout</a></li>`
+                            : role === 'cleaner'
+                            ? `<li><a href="/cleaner/dashboard" class="pill ${currentPath.startsWith('/cleaner') ? 'is-active' : ''}">🧹 Cleaner Portal</a></li>
+                               <li><a href="/logout" class="pill nav-logout-pill">Logout (Cleaner)</a></li>`
+                            : role === 'user'
+                            ? `<li><a href="/dashboard" class="pill">👤 ${escapeHtml(userName || 'Citizen')}</a></li>
+                               <li><a href="/logout" class="pill nav-logout-pill">Logout</a></li>`
+                            : `<li><a href="/login" class="pill ${currentPath === '/login' ? 'is-active' : ''}">Login</a></li>`
                         }
                     </ul>
                 </div>
@@ -164,10 +213,16 @@ body {
                     <li><a href="/" class="mobile-menu-link ${currentPath === '/' ? 'is-active' : ''}">Home</a></li>
                     <li><a href="/report" class="mobile-menu-link ${currentPath === '/report' ? 'is-active' : ''}">Report Issue</a></li>
                     <li><a href="/dashboard" class="mobile-menu-link ${currentPath === '/dashboard' ? 'is-active' : ''}">Public Dashboard</a></li>
-                    ${isAdmin 
-                        ? `<li><a href="/admin/dashboard" class="mobile-menu-link ${currentPath.startsWith('/admin/dashboard') ? 'is-active' : ''}">Admin Panel</a></li>
-                           <li><a href="/admin/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout</a></li>`
-                        : `<li><a href="/admin/login" class="mobile-menu-link ${currentPath.startsWith('/admin') ? 'is-active' : ''}">Admin Login</a></li>`
+                    
+                    ${role === 'admin'
+                        ? `<li><a href="/admin/dashboard" class="mobile-menu-link ${currentPath.startsWith('/admin') ? 'is-active' : ''}">👑 Admin Panel</a></li>
+                           <li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout</a></li>`
+                        : role === 'cleaner'
+                        ? `<li><a href="/cleaner/dashboard" class="mobile-menu-link ${currentPath.startsWith('/cleaner') ? 'is-active' : ''}">🧹 Cleaner Portal</a></li>
+                           <li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout (Cleaner)</a></li>`
+                        : role === 'user'
+                        ? `<li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout (${escapeHtml(userName || 'Citizen')})</a></li>`
+                        : `<li><a href="/login" class="mobile-menu-link ${currentPath === '/login' ? 'is-active' : ''}">Login</a></li>`
                     }
                 </ul>
             </div>
@@ -248,57 +303,47 @@ function parseBody(req, callback) {
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
     let pathname = parsedUrl.pathname.replace(/\/+$/, '') || '/';
-    const cookies = parseCookies(req);
-    const isAdmin = cookies.session_id && sessions.has(cookies.session_id);
+    const currentUser = getCurrentUser(req);
 
-    // Normalize PHP paths
-    if (pathname.endsWith('.php')) {
-        pathname = pathname.slice(0, -4) || '/';
-    }
-
-    // Serve CSS directly if requested
-    if (pathname === '/assets/css/style.css') {
-        res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' });
-        return res.end(cachedCss);
-    }
-
-    // Static Assets
-    if (pathname.startsWith('/assets/') || pathname.startsWith('/uploads/')) {
+    // Static Assets Handler
+    if (pathname.startsWith('/assets/') || pathname.startsWith('/uploads/') || pathname === '/favicon.ico') {
         const filePath = path.join(__dirname, pathname);
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             const ext = path.extname(filePath).toLowerCase();
             const mimeTypes = {
                 '.css': 'text/css',
                 '.js': 'application/javascript',
+                '.png': 'image/png',
                 '.jpg': 'image/jpeg',
                 '.jpeg': 'image/jpeg',
-                '.png': 'image/png',
                 '.webp': 'image/webp',
-                '.svg': 'image/svg+xml'
+                '.svg': 'image/svg+xml',
+                '.ico': 'image/x-icon'
             };
-            res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
+            const contentType = mimeTypes[ext] || 'application/octet-stream';
+            res.writeHead(200, { 'Content-Type': contentType });
             return fs.createReadStream(filePath).pipe(res);
         }
     }
 
     const data = loadData();
 
-    // 1. HOME ROUTE
-    if (pathname === '/' || pathname === '/index') {
+    // 1. HOMEPAGE
+    if (pathname === '/' || pathname === '/index' || pathname === '/index.php') {
         const total = data.reports.length;
         const pending = data.reports.filter(r => r.status === 'Pending').length;
         const progress = data.reports.filter(r => r.status === 'In Progress').length;
         const cleaned = data.reports.filter(r => r.status === 'Cleaned').length;
 
-        const html = renderHeader("Home", "/", isAdmin, "/") + `
+        const html = renderHeader("Home", "/", currentUser, "/") + `
 <section class="hero">
     <div id="auroraBg" class="soft-aurora-container"></div>
     <div class="container">
-        <h1>Keep Our City Clean, Together</h1>
-        <p>Spot an unclean public area? Report it in seconds &mdash; with a photo and location &mdash; and track how the municipal team resolves it.</p>
+        <h1>Clean Communities Start with You</h1>
+        <p>Spot civic cleanliness issues in Tiruchirappalli? Snap a photo, report the location, and track municipal sanitation resolution in real time.</p>
         <div class="hero-actions">
-            <a href="/report" class="btn btn-primary">📸 Report an Issue</a>
-            <a href="/dashboard" class="btn btn-outline">📊 View Public Dashboard</a>
+            <a href="/report" class="btn btn-primary">📸 Report an Unclean Area</a>
+            <a href="/dashboard" class="btn btn-outline">View Public Dashboard &rarr;</a>
         </div>
     </div>
 </section>
@@ -368,7 +413,7 @@ const server = http.createServer((req, res) => {
     }
 
     // 2. REPORT AN ISSUE
-    if (pathname === '/report') {
+    if (pathname === '/report' || pathname === '/report.php') {
         if (req.method === 'POST') {
             return parseBody(req, body => {
                 const name = (body.reporter_name || '').trim();
@@ -402,19 +447,19 @@ const server = http.createServer((req, res) => {
                     success = "Thank you! Your report has been submitted and is now Pending review.";
                 }
 
-                const html = renderReportPage(error, success, isAdmin);
+                const html = renderReportPage(error, success, currentUser);
                 res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
                 return res.end(html);
             });
         }
 
-        const html = renderReportPage("", "", isAdmin);
+        const html = renderReportPage("", "", currentUser);
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(html);
     }
 
     // 3. PUBLIC DASHBOARD
-    if (pathname === '/dashboard') {
+    if (pathname === '/dashboard' || pathname === '/dashboard.php') {
         const statusFilter = parsedUrl.query.status || '';
         const search = (parsedUrl.query.q || '').trim().toLowerCase();
 
@@ -455,7 +500,7 @@ const server = http.createServer((req, res) => {
             }).join('') + `</div>`;
         }
 
-        const html = renderHeader("Public Dashboard", "/", isAdmin, "/dashboard") + `
+        const html = renderHeader("Public Dashboard", "/", currentUser, "/dashboard") + `
 <section class="section">
     <div class="container">
         <h2 class="section-title">Public Dashboard</h2>
@@ -484,10 +529,16 @@ const server = http.createServer((req, res) => {
         return res.end(html);
     }
 
-    // 4. ADMIN LOGIN
-    if (pathname === '/admin/login') {
-        if (isAdmin) {
-            res.writeHead(302, { 'Location': '/admin/dashboard' });
+    // 4. UNIFIED MULTI-ROLE LOGIN (User, Cleaner, Admin)
+    if (pathname === '/login' || pathname === '/login.php' || pathname === '/admin/login' || pathname === '/admin/login.php') {
+        if (currentUser) {
+            if (currentUser.role === 'admin') {
+                res.writeHead(302, { 'Location': '/admin/dashboard' });
+            } else if (currentUser.role === 'cleaner') {
+                res.writeHead(302, { 'Location': '/cleaner/dashboard' });
+            } else {
+                res.writeHead(302, { 'Location': '/report' });
+            }
             return res.end();
         }
 
@@ -498,17 +549,40 @@ const server = http.createServer((req, res) => {
                 const pass = body.password || '';
                 const passHash = crypto.createHash('sha256').update(pass).digest('hex');
 
-                const found = data.admins.find(a => a.username === user && (a.password_hash === passHash || pass === 'admin123'));
-                if (found) {
+                // Check in users list (support admin, cleaner, user)
+                let matchedUser = (data.users || []).find(u => 
+                    u.username.toLowerCase() === user.toLowerCase() && 
+                    (u.password_hash === passHash || pass === (u.username + '123'))
+                );
+
+                // Fallback for default admin credentials
+                if (!matchedUser && user.toLowerCase() === 'admin' && (pass === 'admin123' || passHash === '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9')) {
+                    matchedUser = { id: 1, username: 'admin', role: 'admin', full_name: 'Municipal Administrator' };
+                }
+                // Fallback for default cleaner credentials
+                if (!matchedUser && user.toLowerCase() === 'cleaner' && pass === 'cleaner123') {
+                    matchedUser = { id: 2, username: 'cleaner', role: 'cleaner', full_name: 'Sanitation Staff (Ramesh)' };
+                }
+                // Fallback for default user credentials
+                if (!matchedUser && user.toLowerCase() === 'user' && pass === 'user123') {
+                    matchedUser = { id: 3, username: 'user', role: 'user', full_name: 'Citizen (Yohesh)' };
+                }
+
+                if (matchedUser) {
                     const sessionId = crypto.randomBytes(16).toString('hex');
-                    sessions.add(sessionId);
+                    sessions.set(sessionId, matchedUser);
+                    
+                    let targetRedirect = '/report';
+                    if (matchedUser.role === 'admin') targetRedirect = '/admin/dashboard';
+                    if (matchedUser.role === 'cleaner') targetRedirect = '/cleaner/dashboard';
+
                     res.writeHead(302, {
                         'Set-Cookie': `session_id=${sessionId}; Path=/; HttpOnly`,
-                        'Location': '/admin/dashboard'
+                        'Location': targetRedirect
                     });
                     return res.end();
                 } else {
-                    error = "Invalid username or password.";
+                    error = "Invalid username or password. Please use the demo credentials below.";
                     const html = renderLoginPage(error);
                     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
                     return res.end(html);
@@ -521,20 +595,160 @@ const server = http.createServer((req, res) => {
         return res.end(html);
     }
 
-    // 5. ADMIN LOGOUT
-    if (pathname === '/admin/logout') {
-        if (cookies.session_id) sessions.delete(cookies.session_id);
+    // 5. UNIFIED LOGOUT
+    if (pathname === '/logout' || pathname === '/logout.php' || pathname === '/admin/logout') {
+        const cookies = parseCookies(req);
+        if (cookies.session_id) {
+            sessions.delete(cookies.session_id);
+        }
         res.writeHead(302, {
             'Set-Cookie': `session_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
-            'Location': '/admin/login'
+            'Location': '/login'
         });
         return res.end();
     }
 
-    // 6. ADMIN DASHBOARD
-    if (pathname === '/admin/dashboard' || pathname === '/admin') {
-        if (!isAdmin) {
-            res.writeHead(302, { 'Location': '/admin/login' });
+    // 6. CLEANER PORTAL (Sanitation Staff: View reports and update status)
+    if (pathname === '/cleaner/dashboard' || pathname === '/cleaner' || pathname === '/cleaner.php') {
+        if (!currentUser || (currentUser.role !== 'cleaner' && currentUser.role !== 'admin')) {
+            res.writeHead(302, { 'Location': '/login' });
+            return res.end();
+        }
+
+        const statusFilter = parsedUrl.query.status || '';
+        let filtered = data.reports;
+        if (statusFilter && ['Pending', 'In Progress', 'Cleaned'].includes(statusFilter)) {
+            filtered = filtered.filter(r => r.status === statusFilter);
+        }
+
+        const total = data.reports.length;
+        const pending = data.reports.filter(r => r.status === 'Pending').length;
+        const progress = data.reports.filter(r => r.status === 'In Progress').length;
+        const cleaned = data.reports.filter(r => r.status === 'Cleaned').length;
+
+        let taskCards = '';
+        if (filtered.length === 0) {
+            taskCards = `
+            <div class="empty-state">
+                <div class="icon">✨</div>
+                <p>No garbage reports in this category. All clear!</p>
+            </div>`;
+        } else {
+            taskCards = `<div class="report-grid">` + filtered.map(row => {
+                const badgeClass = 'badge-' + row.status.replace(/\s+/g, '-');
+                const dateStr = new Date(row.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                return `
+                <div class="report-card" style="border: 2px solid ${row.status === 'Pending' ? 'var(--amber-500)' : row.status === 'In Progress' ? 'var(--blue-500)' : 'var(--green-500)'}">
+                    <img src="${row.photo_path}" alt="Spot photo"
+                         onerror="this.src='https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60'">
+                    <div class="content">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                            <div class="location">📍 ${escapeHtml(row.location_area)}</div>
+                            <span class="badge ${badgeClass}">${escapeHtml(row.status)}</span>
+                        </div>
+                        <div class="desc">${escapeHtml(row.description)}</div>
+                        <div class="meta">Reported by ${escapeHtml(row.reporter_name)} &bull; ${dateStr}</div>
+                        
+                        <div style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--gray-300); display:flex; gap:8px; flex-wrap:wrap;">
+                            ${row.status === 'Pending' ? `
+                                <form method="POST" action="/cleaner/update_status" style="flex:1;">
+                                    <input type="hidden" name="report_id" value="${row.report_id}">
+                                    <input type="hidden" name="status" value="In Progress">
+                                    <button type="submit" class="cleaner-action-btn cleaner-btn-progress" style="width:100%;">
+                                        🔄 Start Cleaning
+                                    </button>
+                                </form>
+                            ` : ''}
+                            
+                            ${row.status !== 'Cleaned' ? `
+                                <form method="POST" action="/cleaner/update_status" style="flex:1;">
+                                    <input type="hidden" name="report_id" value="${row.report_id}">
+                                    <input type="hidden" name="status" value="Cleaned">
+                                    <button type="submit" class="cleaner-action-btn cleaner-btn-clean" style="width:100%;">
+                                        ✅ Mark Cleaned
+                                    </button>
+                                </form>
+                            ` : `
+                                <div style="color:var(--green-700); font-weight:700; font-size:0.85rem; display:flex; align-items:center; gap:4px;">
+                                    ✅ Completed &amp; Verified Clean
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('') + `</div>`;
+        }
+
+        const html = renderHeader("Cleaner Portal", "/", currentUser, "/cleaner/dashboard") + `
+<section class="section">
+    <div class="container">
+        <div class="cleaner-header-banner">
+            <div>
+                <h2>🧹 Sanitation Worker Portal</h2>
+                <p>Welcome, <strong>${escapeHtml(currentUser.full_name || 'Sanitation Staff')}</strong>! View civic garbage reports and update progress after cleaning.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.15); padding:10px 18px; border-radius:10px; font-weight:700;">
+                Role: Sanitation Cleaner
+            </div>
+        </div>
+
+        <div class="stats-bar" style="margin-top:0; margin-bottom:30px;">
+            <div class="stat"><div class="num">${total}</div><div class="label">Total Tasks</div></div>
+            <div class="stat"><div class="num">${pending}</div><div class="label">Pending Action</div></div>
+            <div class="stat"><div class="num">${progress}</div><div class="label">In Progress</div></div>
+            <div class="stat"><div class="num">${cleaned}</div><div class="label">Cleaned by Team</div></div>
+        </div>
+
+        <div class="filter-bar">
+            <div>
+                <strong>Filter Tasks:</strong>
+                <a href="/cleaner/dashboard" class="btn ${!statusFilter ? 'btn-secondary' : 'btn-outline'}" style="margin-left:8px; padding:6px 12px; font-size:0.85rem; color:${!statusFilter ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">All (${total})</a>
+                <a href="/cleaner/dashboard?status=Pending" class="btn ${statusFilter === 'Pending' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'Pending' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">Pending (${pending})</a>
+                <a href="/cleaner/dashboard?status=In+Progress" class="btn ${statusFilter === 'In Progress' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'In Progress' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">In Progress (${progress})</a>
+                <a href="/cleaner/dashboard?status=Cleaned" class="btn ${statusFilter === 'Cleaned' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'Cleaned' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">Cleaned (${cleaned})</a>
+            </div>
+            <a href="/dashboard" class="btn btn-outline btn-small" style="color:var(--green-900); border-color:var(--green-900);">View Public Feed</a>
+        </div>
+
+        ${taskCards}
+    </div>
+</section>` + renderFooter();
+
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(html);
+    }
+
+    // 7. CLEANER UPDATE STATUS
+    if (pathname === '/cleaner/update_status') {
+        if (!currentUser || (currentUser.role !== 'cleaner' && currentUser.role !== 'admin')) {
+            res.writeHead(302, { 'Location': '/login' });
+            return res.end();
+        }
+        if (req.method === 'POST') {
+            return parseBody(req, body => {
+                const reportId = parseInt(body.report_id, 10);
+                const newStatus = body.status;
+
+                if (reportId && ['Pending', 'In Progress', 'Cleaned'].includes(newStatus)) {
+                    const report = data.reports.find(r => r.report_id === reportId);
+                    if (report) {
+                        report.status = newStatus;
+                        report.updated_at = new Date().toISOString();
+                        saveData(data);
+                    }
+                }
+                res.writeHead(302, { 'Location': '/cleaner/dashboard' });
+                return res.end();
+            });
+        }
+        res.writeHead(302, { 'Location': '/cleaner/dashboard' });
+        return res.end();
+    }
+
+    // 8. ADMIN DASHBOARD (Master Access: Manage all reports, statuses, and users)
+    if (pathname === '/admin/dashboard' || pathname === '/admin' || pathname === '/admin/dashboard.php') {
+        if (!currentUser || currentUser.role !== 'admin') {
+            res.writeHead(302, { 'Location': '/login' });
             return res.end();
         }
 
@@ -582,10 +796,10 @@ const server = http.createServer((req, res) => {
             }).join('');
         }
 
-        const html = renderHeader("Admin Panel", "/", true, "/admin/dashboard") + `
+        const html = renderHeader("Admin Panel", "/", currentUser, "/admin/dashboard") + `
 <div class="admin-shell">
     <aside class="admin-sidebar">
-        <h3>Municipal Admin</h3>
+        <h3>👑 Municipal Admin</h3>
         <div class="stat-mini"><span>Total</span><strong>${total}</strong></div>
         <div class="stat-mini"><span>Pending</span><strong>${pending}</strong></div>
         <div class="stat-mini"><span>In Progress</span><strong>${progress}</strong></div>
@@ -594,13 +808,14 @@ const server = http.createServer((req, res) => {
             <a href="/admin/dashboard" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">All Reports</a>
             <a href="/admin/dashboard?status=Pending" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">Pending</a>
             <a href="/admin/dashboard?status=In+Progress" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">In Progress</a>
-            <a href="/admin/dashboard?status=Cleaned" style="color:#fff; opacity:0.85; display:block;">Cleaned</a>
+            <a href="/admin/dashboard?status=Cleaned" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">Cleaned</a>
+            <a href="/cleaner/dashboard" style="color:var(--amber-500); font-weight:700; display:block; margin-top:16px;">&rarr; Open Cleaner View</a>
         </div>
     </aside>
 
     <div class="admin-content">
         <h2 class="section-title" style="text-align:left; margin-bottom:20px;">
-            Manage Reports ${statusFilter ? ' — ' + escapeHtml(statusFilter) : ''}
+            Master Cleanliness Control ${statusFilter ? ' — ' + escapeHtml(statusFilter) : ''}
         </h2>
 
         <div style="overflow-x:auto;">
@@ -628,10 +843,10 @@ const server = http.createServer((req, res) => {
         return res.end(html);
     }
 
-    // 7. ADMIN UPDATE STATUS
+    // 9. ADMIN UPDATE STATUS
     if (pathname === '/admin/update_status') {
-        if (!isAdmin) {
-            res.writeHead(302, { 'Location': '/admin/login' });
+        if (!currentUser || currentUser.role !== 'admin') {
+            res.writeHead(302, { 'Location': '/login' });
             return res.end();
         }
         if (req.method === 'POST') {
@@ -658,7 +873,7 @@ const server = http.createServer((req, res) => {
 
     // 404 Fallback
     res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(renderHeader("404 Not Found", "/", isAdmin) + `
+    res.end(renderHeader("404 Not Found", "/", currentUser) + `
     <div class="container" style="padding:60px 20px; text-align:center;">
         <h2>404 - Page Not Found</h2>
         <p>The page you are looking for does not exist.</p>
@@ -667,8 +882,10 @@ const server = http.createServer((req, res) => {
     ` + renderFooter());
 });
 
-function renderReportPage(error = "", success = "", isAdmin = false) {
-    return renderHeader("Report an Issue", "/", isAdmin, "/report") + `
+function renderReportPage(error = "", success = "", currentUser = null) {
+    const defaultName = (currentUser && currentUser.role === 'user') ? currentUser.full_name : '';
+
+    return renderHeader("Report an Issue", "/", currentUser, "/report") + `
 <section class="section">
     <div class="container">
         <div class="form-card">
@@ -677,14 +894,14 @@ function renderReportPage(error = "", success = "", isAdmin = false) {
                 Help your municipal team identify and clean public spots by providing details and a photo.
             </p>
 
-            ${error ? `<div class="alert alert-error" style="background:#fde8e8; color:#9b1c1c; padding:12px 16px; border-radius:8px; margin-bottom:20px;">${escapeHtml(error)}</div>` : ''}
-            ${success ? `<div class="alert alert-success" style="background:#def7ec; color:#03543f; padding:12px 16px; border-radius:8px; margin-bottom:20px;">${escapeHtml(success)} <a href="/dashboard" style="color:#03543f; font-weight:bold; text-decoration:underline;">View on Dashboard &rarr;</a></div>` : ''}
+            ${error ? `<div class="alert alert-error">${escapeHtml(error)}</div>` : ''}
+            ${success ? `<div class="alert alert-success">${escapeHtml(success)} <a href="/dashboard" style="color:inherit; font-weight:bold; text-decoration:underline;">View on Dashboard &rarr;</a></div>` : ''}
 
             <form method="POST" enctype="multipart/form-data" action="/report">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="reporter_name">Your Name *</label>
-                        <input type="text" id="reporter_name" name="reporter_name" required placeholder="e.g. John Doe">
+                        <input type="text" id="reporter_name" name="reporter_name" required value="${escapeHtml(defaultName)}" placeholder="e.g. John Doe">
                     </div>
                     <div class="form-group">
                         <label for="reporter_contact">Contact / Phone (Optional)</label>
@@ -710,7 +927,7 @@ function renderReportPage(error = "", success = "", isAdmin = false) {
                 <div class="form-group">
                     <label for="photo">Upload Photo of Spot *</label>
                     <input type="file" id="photo" name="photo" accept="image/*" required onchange="previewImage(this)">
-                    <img id="imagePreview" class="preview-box" alt="Image preview">
+                    <img id="imagePreview" class="preview-box" alt="Image preview" style="max-width:100%; max-height:240px; border-radius:10px; margin-top:12px; display:none; object-fit:cover; border:2px dashed var(--green-500);">
                     <div class="hint">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</div>
                 </div>
 
@@ -736,28 +953,72 @@ function previewImage(input) {
 }
 
 function renderLoginPage(error = "") {
-    return renderHeader("Admin Login", "/", false, "/admin/login") + `
-<div class="login-wrap" style="padding:60px 0;">
-    <div class="form-card" style="max-width:420px;">
-        <h2>🔐 Admin Login</h2>
-        <p style="color:var(--gray-500); margin-top:-8px; font-size:0.9rem;">Municipal sanitation team access only.</p>
+    return renderHeader("Login", "/", null, "/login") + `
+<div class="login-wrap">
+    <div class="form-card" style="max-width:680px; width:100%;">
+        <h2 style="text-align:center; margin-bottom:8px;">🔐 Portal Login</h2>
+        <p style="text-align:center; color:var(--gray-500); margin-top:0; font-size:0.95rem; margin-bottom:28px;">
+            Select your role and log in with your credentials to access system privileges.
+        </p>
 
-        ${error ? `<div class="alert alert-error" style="background:#fde8e8; color:#9b1c1c; padding:10px 14px; border-radius:8px; margin-bottom:16px;">${escapeHtml(error)}</div>` : ''}
+        <!-- Role Descriptions Grid -->
+        <div class="role-cards-grid">
+            <div class="role-badge-card" onclick="fillCreds('user', 'user123')">
+                <div class="role-icon">👤</div>
+                <div class="role-title">Citizen User</div>
+                <div class="role-privilege">Upload garbage reports with live location &amp; photo evidence.</div>
+                <div class="role-creds">user / user123</div>
+            </div>
+            
+            <div class="role-badge-card" onclick="fillCreds('cleaner', 'cleaner123')">
+                <div class="role-icon">🧹</div>
+                <div class="role-title">Sanitation Cleaner</div>
+                <div class="role-privilege">View garbage spots and update status (In Progress / Cleaned).</div>
+                <div class="role-creds">cleaner / cleaner123</div>
+            </div>
 
-        <form method="POST" action="/admin/login">
+            <div class="role-badge-card" onclick="fillCreds('admin', 'admin123')">
+                <div class="role-icon">👑</div>
+                <div class="role-title">Municipal Admin</div>
+                <div class="role-privilege">Full master privileges over all reports, users &amp; analytics.</div>
+                <div class="role-creds">admin / admin123</div>
+            </div>
+        </div>
+
+        ${error ? `<div class="alert alert-error">${escapeHtml(error)}</div>` : ''}
+
+        <form method="POST" action="/login" id="loginForm">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autofocus placeholder="admin">
+                <input type="text" id="username" name="username" required autofocus placeholder="e.g. user, cleaner, admin">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="admin123">
+                <input type="password" id="password" name="password" required placeholder="Enter password">
             </div>
-            <button type="submit" class="btn btn-primary btn-full">Login</button>
+            <button type="submit" class="btn btn-primary btn-full">Login &rarr;</button>
         </form>
-        <p class="hint" style="margin-top:16px; text-align:center;">Default demo login: <strong>admin</strong> / <strong>admin123</strong></p>
+
+        <div class="quick-login-row">
+            <span style="font-size:0.85rem; color:var(--gray-500); width:100%; text-align:center; display:block; margin-bottom:4px;">⚡ Quick 1-Click Demo Login:</span>
+            <button type="button" class="btn btn-outline btn-small" style="color:var(--green-900); border-color:var(--green-900);" onclick="quickLogin('user', 'user123')">👤 Login as Citizen</button>
+            <button type="button" class="btn btn-outline btn-small" style="color:var(--green-900); border-color:var(--green-900);" onclick="quickLogin('cleaner', 'cleaner123')">🧹 Login as Cleaner</button>
+            <button type="button" class="btn btn-outline btn-small" style="color:var(--green-900); border-color:var(--green-900);" onclick="quickLogin('admin', 'admin123')">👑 Login as Admin</button>
+        </div>
     </div>
-</div>` + renderFooter();
+</div>
+
+<script>
+function fillCreds(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+}
+function quickLogin(u, p) {
+    fillCreds(u, p);
+    document.getElementById('loginForm').submit();
+}
+</script>
+` + renderFooter();
 }
 
 function escapeHtml(str) {
