@@ -5,5 +5,6 @@
         <p class="footer-sdg">Supporting SDG 11: Sustainable Cities and Communities</p>
     </div>
 </footer>
+<script src="<?php echo isset($basePath) ? $basePath : ''; ?>assets/js/script.js"></script>
 </body>
 </html>

@@ -1,0 +1,29 @@
+.text-cursor-container {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 99999;
+  overflow: hidden;
+}
+
+.text-cursor-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.text-cursor-item {
+  position: absolute;
+  user-select: none;
+  white-space: nowrap;
+  font-size: 1.75rem;
+  pointer-events: none;
+  transform-origin: center center;
+  transition: transform 0.05s linear;
+}

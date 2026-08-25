@@ -155,6 +155,33 @@ body {
     transform: translateY(-4px);
     box-shadow: 0 12px 30px rgba(15, 61, 46, 0.16);
 }
+/* TextCursor Broom Trail Styles */
+.text-cursor-container {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99999;
+    overflow: hidden;
+}
+.text-cursor-inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+.text-cursor-item {
+    position: absolute;
+    user-select: none;
+    white-space: nowrap;
+    font-size: 1.6rem;
+    pointer-events: none;
+    transform-origin: center center;
+}
 </style>
 </head>
 <body>
@@ -187,6 +214,102 @@ function renderFooter() {
         <p class="footer-sdg">Supporting SDG 11: Sustainable Cities and Communities</p>
     </div>
 </footer>
+<script src="/assets/js/script.js"></script>
+<script>
+// TextCursor Broom Trail (React Bits adapted for Vanilla/SSR)
+(function() {
+    const text = '🧹';
+    const spacing = 40;
+    const maxPoints = 8;
+    const exitDuration = 350;
+    const removalInterval = 30;
+    const followMouseDirection = true;
+    const randomFloat = true;
+
+    let trail = [];
+    let lastMoveTime = Date.now();
+    let idCounter = 0;
+
+    const container = document.createElement('div');
+    container.className = 'text-cursor-container';
+    container.innerHTML = '<div class="text-cursor-inner"></div>';
+    document.body.appendChild(container);
+    const inner = container.querySelector('.text-cursor-inner');
+
+    function createRandomData() {
+        if (!randomFloat) return { rx: 0, ry: 0, rr: 0 };
+        return {
+            rx: Math.random() * 8 - 4,
+            ry: Math.random() * 8 - 4,
+            rr: Math.random() * 12 - 6
+        };
+    }
+
+    function addPoint(x, y, angle) {
+        const rand = createRandomData();
+        const id = 'tc_' + (idCounter++);
+        const el = document.createElement('div');
+        el.id = id;
+        el.className = 'text-cursor-item';
+        el.textContent = text;
+        el.style.left = (x + rand.rx) + 'px';
+        el.style.top = (y + rand.ry) + 'px';
+        el.style.transform = 'translate(-50%, -50%) rotate(' + (angle + rand.rr) + 'deg) scale(1)';
+        el.style.opacity = '1';
+        el.style.transition = 'opacity ' + exitDuration + 'ms ease-out, transform ' + exitDuration + 'ms ease-out';
+        inner.appendChild(el);
+
+        trail.push({ id, el, x, y, angle, time: Date.now() });
+
+        if (trail.length > maxPoints) {
+            removePoint(trail.shift());
+        }
+    }
+
+    function removePoint(item) {
+        if (!item || !item.el) return;
+        item.el.style.opacity = '0';
+        item.el.style.transform += ' scale(0.2)';
+        setTimeout(function() {
+            if (item.el && item.el.parentNode) {
+                item.el.parentNode.removeChild(item.el);
+            }
+        }, exitDuration);
+    }
+
+    window.addEventListener('mousemove', function(e) {
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+
+        if (trail.length === 0) {
+            addPoint(mouseX, mouseY, 0);
+        } else {
+            const last = trail[trail.length - 1];
+            const dx = mouseX - last.x;
+            const dy = mouseY - last.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance >= spacing) {
+                const rawAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
+                const angle = followMouseDirection ? rawAngle : 0;
+                const steps = Math.floor(distance / spacing);
+
+                for (let i = 1; i <= steps; i++) {
+                    const t = (spacing * i) / distance;
+                    addPoint(last.x + dx * t, last.y + dy * t, angle);
+                }
+            }
+        }
+        lastMoveTime = Date.now();
+    });
+
+    setInterval(function() {
+        if (Date.now() - lastMoveTime > 75 && trail.length > 0) {
+            removePoint(trail.shift());
+        }
+    }, removalInterval);
+})();
+</script>
 </body>
 </html>`;
 }
