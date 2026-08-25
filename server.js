@@ -8,6 +8,16 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'database', 'data.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const CSS_FILE = path.join(__dirname, 'assets', 'css', 'style.css');
+
+let cachedCss = "";
+try {
+    if (fs.existsSync(CSS_FILE)) {
+        cachedCss = fs.readFileSync(CSS_FILE, 'utf8');
+    }
+} catch (e) {
+    console.error("Could not read CSS file:", e);
+}
 
 if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -103,32 +113,64 @@ function parseCookies(req) {
     return list;
 }
 
-function renderHeader(pageTitle = "", basePath = "", isAdmin = false) {
+function renderHeader(pageTitle = "", basePath = "/", isAdmin = false) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${pageTitle ? pageTitle + " | " : ""}Smart City Cleanliness Reporting System</title>
-<link rel="stylesheet" href="${basePath}assets/css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
 <style>
-  .preview-box { max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 10px; display: none; object-fit: cover; }
+/* Embedded Styles to ensure 100% reliable rendering anywhere */
+${cachedCss}
+
+/* Enhanced font & modern aesthetics */
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+.preview-box {
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: 10px;
+    margin-top: 12px;
+    display: none;
+    object-fit: cover;
+    border: 2px dashed var(--green-500);
+}
+.hero {
+    background: linear-gradient(135deg, #104c35 0%, #1a6b4a 50%, #2ba86f 100%);
+    box-shadow: inset 0 -20px 30px rgba(0,0,0,0.1);
+}
+.stats-bar {
+    border: 1px solid rgba(0,0,0,0.06);
+}
+.report-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.report-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(15, 61, 46, 0.16);
+}
 </style>
 </head>
 <body>
 <header class="site-header">
     <div class="container header-inner">
-        <a href="${basePath}" class="logo">
+        <a href="/" class="logo">
             <span class="logo-icon">🏙️</span> CleanCity <span class="logo-sub">Trichy</span>
         </a>
         <nav class="main-nav">
-            <a href="${basePath}">Home</a>
-            <a href="${basePath}report">Report an Issue</a>
-            <a href="${basePath}dashboard">Public Dashboard</a>
+            <a href="/">Home</a>
+            <a href="/report">Report an Issue</a>
+            <a href="/dashboard">Public Dashboard</a>
             ${isAdmin 
-                ? `<a href="${basePath}admin/dashboard">Admin Panel</a>
-                   <a href="${basePath}admin/logout" class="nav-logout">Logout</a>`
-                : `<a href="${basePath}admin/login">Admin Login</a>`
+                ? `<a href="/admin/dashboard">Admin Panel</a>
+                   <a href="/admin/logout" class="nav-logout">Logout</a>`
+                : `<a href="/admin/login">Admin Login</a>`
             }
         </nav>
     </div>
@@ -180,8 +222,12 @@ function parseBody(req, callback) {
                                 const ext = path.extname(filename) || '.jpg';
                                 const newFilename = 'report_' + Date.now() + '_' + Math.floor(Math.random() * 9000 + 1000) + ext;
                                 const filepath = path.join(UPLOADS_DIR, newFilename);
-                                fs.writeFileSync(filepath, content, 'binary');
-                                result[fieldName] = 'uploads/' + newFilename;
+                                try {
+                                    fs.writeFileSync(filepath, content, 'binary');
+                                    result[fieldName] = '/uploads/' + newFilename;
+                                } catch (err) {
+                                    result[fieldName] = 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60';
+                                }
                             } else {
                                 result[fieldName] = '';
                             }
@@ -210,6 +256,12 @@ const server = http.createServer((req, res) => {
         pathname = pathname.slice(0, -4) || '/';
     }
 
+    // Serve CSS directly if requested
+    if (pathname === '/assets/css/style.css') {
+        res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' });
+        return res.end(cachedCss);
+    }
+
     // Static Assets
     if (pathname.startsWith('/assets/') || pathname.startsWith('/uploads/')) {
         const filePath = path.join(__dirname, pathname);
@@ -226,9 +278,6 @@ const server = http.createServer((req, res) => {
             };
             res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
             return fs.createReadStream(filePath).pipe(res);
-        } else {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            return res.end('404 Not Found');
         }
     }
 
@@ -241,7 +290,7 @@ const server = http.createServer((req, res) => {
         const progress = data.reports.filter(r => r.status === 'In Progress').length;
         const cleaned = data.reports.filter(r => r.status === 'Cleaned').length;
 
-        const html = renderHeader("Home", "", isAdmin) + `
+        const html = renderHeader("Home", "/", isAdmin) + `
 <section class="hero">
     <div class="container">
         <h1>Keep Our City Clean, Together</h1>
@@ -390,14 +439,14 @@ const server = http.createServer((req, res) => {
             }).join('') + `</div>`;
         }
 
-        const html = renderHeader("Public Dashboard", "", isAdmin) + `
+        const html = renderHeader("Public Dashboard", "/", isAdmin) + `
 <section class="section">
     <div class="container">
         <h2 class="section-title">Public Dashboard</h2>
         <p class="section-subtitle">Live view of all cleanliness reports submitted by citizens</p>
 
         <div class="filter-bar">
-            <form method="GET">
+            <form method="GET" action="/dashboard">
                 <input type="text" name="q" placeholder="Search location or keyword..." value="${escapeHtml(search)}">
                 <select name="status">
                     <option value="">All Statuses</option>
@@ -593,7 +642,7 @@ const server = http.createServer((req, res) => {
 
     // 404 Fallback
     res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(renderHeader("404 Not Found", "", isAdmin) + `
+    res.end(renderHeader("404 Not Found", "/", isAdmin) + `
     <div class="container" style="padding:60px 20px; text-align:center;">
         <h2>404 - Page Not Found</h2>
         <p>The page you are looking for does not exist.</p>
@@ -603,7 +652,7 @@ const server = http.createServer((req, res) => {
 });
 
 function renderReportPage(error = "", success = "", isAdmin = false) {
-    return renderHeader("Report an Issue", "", isAdmin) + `
+    return renderHeader("Report an Issue", "/", isAdmin) + `
 <section class="section">
     <div class="container">
         <div class="form-card">
@@ -689,7 +738,7 @@ document.getElementById('geoBtn')?.addEventListener('click', function() {
 }
 
 function renderLoginPage(error = "") {
-    return renderHeader("Admin Login", "/") + `
+    return renderHeader("Admin Login", "/", false) + `
 <div class="login-wrap" style="padding:60px 0;">
     <div class="form-card" style="max-width:420px;">
         <h2>🔐 Admin Login</h2>
