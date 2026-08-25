@@ -1,0 +1,60 @@
+{
+  "admins": [
+    {
+      "admin_id": 1,
+      "username": "admin",
+      "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "full_name": "Municipal Administrator"
+    }
+  ],
+  "reports": [
+    {
+      "report_id": 4,
+      "reporter_name": "yogi",
+      "reporter_contact": "",
+      "description": "Ekash pooped",
+      "location_area": "joseph college",
+      "latitude": null,
+      "longitude": null,
+      "photo_path": "uploads/report_1787634850246_7794.png",
+      "status": "Pending",
+      "submitted_at": "2026-08-25T05:14:10.252Z"
+    },
+    {
+      "report_id": 1,
+      "reporter_name": "Ravi Kumar",
+      "reporter_contact": "9876543210",
+      "description": "Large pile of garbage near the bus stop, attracting stray animals.",
+      "location_area": "Anna Nagar Bus Stop, Trichy",
+      "latitude": 10.8231,
+      "longitude": 78.6869,
+      "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
+      "status": "Pending",
+      "submitted_at": "2026-08-23T05:10:56.404Z"
+    },
+    {
+      "report_id": 2,
+      "reporter_name": "Priya S",
+      "reporter_contact": "9123456780",
+      "description": "Overflowing dustbin at the park entrance for the past 3 days.",
+      "location_area": "Gandhi Park, Trichy",
+      "latitude": 10.7905,
+      "longitude": 78.7047,
+      "photo_path": "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&auto=format&fit=crop&q=60",
+      "status": "In Progress",
+      "submitted_at": "2026-08-24T05:10:56.406Z"
+    },
+    {
+      "report_id": 3,
+      "reporter_name": "Mohammed Ali",
+      "reporter_contact": "9988776655",
+      "description": "Drainage blockage causing waste water to spread on the road.",
+      "location_area": "Cantonment Area, Trichy",
+      "latitude": 10.8155,
+      "longitude": 78.6892,
+      "photo_path": "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=500&auto=format&fit=crop&q=60",
+      "status": "Cleaned",
+      "submitted_at": "2026-08-22T05:10:56.406Z"
+    }
+  ]
+}
