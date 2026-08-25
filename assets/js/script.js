@@ -23,10 +23,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 2. React Bits <SoftAurora /> Integration
+    // 2. PillNav Mobile Menu Toggle
+    var mobileBtn = document.getElementById('mobileMenuBtn');
+    var mobilePopover = document.getElementById('mobileMenuPopover');
+    if (mobileBtn && mobilePopover) {
+        mobileBtn.addEventListener('click', function () {
+            mobileBtn.classList.toggle('is-open');
+            mobilePopover.classList.toggle('is-open');
+        });
+    }
+
+    // 3. React Bits <SoftAurora /> Integration
     initSoftAurora('auroraBg');
 
-    // 3. React Bits <TextCursor /> Integration (Broom 🧹 Trail)
+    // 4. React Bits <TextCursor /> Integration (Broom 🧹 Trail)
     initBroomCursor();
 });
 

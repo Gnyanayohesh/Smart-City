@@ -113,7 +113,7 @@ function parseCookies(req) {
     return list;
 }
 
-function renderHeader(pageTitle = "", basePath = "/", isAdmin = false) {
+function renderHeader(pageTitle = "", basePath = "/", isAdmin = false, currentPath = "/") {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -131,97 +131,47 @@ ${cachedCss}
 body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
-.preview-box {
-    max-width: 100%;
-    max-height: 240px;
-    border-radius: 10px;
-    margin-top: 12px;
-    display: none;
-    object-fit: cover;
-    border: 2px dashed var(--green-500);
-}
-.hero {
-    position: relative;
-    overflow: hidden;
-    background: radial-gradient(circle at 50% 20%, #15573e 0%, #0c3525 100%);
-    color: var(--white);
-    padding: 85px 0 75px;
-    text-align: center;
-}
-.hero .container {
-    position: relative;
-    z-index: 10;
-}
-.soft-aurora-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.85;
-}
-.soft-aurora-container canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-}
-.stats-bar {
-    border: 1px solid rgba(0,0,0,0.06);
-}
-.report-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.report-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(15, 61, 46, 0.16);
-}
-/* TextCursor Broom Trail Styles */
-.text-cursor-container {
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 99999;
-    overflow: hidden;
-}
-.text-cursor-inner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-}
-.text-cursor-item {
-    position: absolute;
-    user-select: none;
-    white-space: nowrap;
-    font-size: 1.6rem;
-    pointer-events: none;
-    transform-origin: center center;
-}
 </style>
 </head>
 <body>
 <header class="site-header">
     <div class="container header-inner">
-        <a href="/" class="logo">
-            <span class="logo-icon">🏙️</span> CleanCity <span class="logo-sub">Trichy</span>
-        </a>
-        <nav class="main-nav">
-            <a href="/">Home</a>
-            <a href="/report">Report an Issue</a>
-            <a href="/dashboard">Public Dashboard</a>
-            ${isAdmin 
-                ? `<a href="/admin/dashboard">Admin Panel</a>
-                   <a href="/admin/logout" class="nav-logout">Logout</a>`
-                : `<a href="/admin/login">Admin Login</a>`
-            }
-        </nav>
+        <div class="pill-nav-container">
+            <nav class="pill-nav" aria-label="Primary">
+                <a href="/" class="pill-logo" aria-label="Home">
+                    <span class="logo-emoji">🏙️</span>
+                    <span>CleanCity <small style="font-weight:400; opacity:0.85; font-size:0.8rem;">Trichy</small></span>
+                </a>
+                <div class="pill-nav-items desktop-only">
+                    <ul class="pill-list" role="menubar">
+                        <li><a href="/" class="pill ${currentPath === '/' ? 'is-active' : ''}">Home</a></li>
+                        <li><a href="/report" class="pill ${currentPath === '/report' ? 'is-active' : ''}">Report Issue</a></li>
+                        <li><a href="/dashboard" class="pill ${currentPath === '/dashboard' ? 'is-active' : ''}">Public Dashboard</a></li>
+                        ${isAdmin 
+                            ? `<li><a href="/admin/dashboard" class="pill ${currentPath.startsWith('/admin/dashboard') ? 'is-active' : ''}">Admin Panel</a></li>
+                               <li><a href="/admin/logout" class="pill nav-logout-pill">Logout</a></li>`
+                            : `<li><a href="/admin/login" class="pill ${currentPath.startsWith('/admin') ? 'is-active' : ''}">Admin Login</a></li>`
+                        }
+                    </ul>
+                </div>
+                <button class="mobile-menu-button mobile-only" id="mobileMenuBtn" aria-label="Toggle menu">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+            </nav>
+            <div class="mobile-menu-popover mobile-only" id="mobileMenuPopover">
+                <ul class="mobile-menu-list">
+                    <li><a href="/" class="mobile-menu-link ${currentPath === '/' ? 'is-active' : ''}">Home</a></li>
+                    <li><a href="/report" class="mobile-menu-link ${currentPath === '/report' ? 'is-active' : ''}">Report Issue</a></li>
+                    <li><a href="/dashboard" class="mobile-menu-link ${currentPath === '/dashboard' ? 'is-active' : ''}">Public Dashboard</a></li>
+                    ${isAdmin 
+                        ? `<li><a href="/admin/dashboard" class="mobile-menu-link ${currentPath.startsWith('/admin/dashboard') ? 'is-active' : ''}">Admin Panel</a></li>
+                           <li><a href="/admin/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout</a></li>`
+                        : `<li><a href="/admin/login" class="mobile-menu-link ${currentPath.startsWith('/admin') ? 'is-active' : ''}">Admin Login</a></li>`
+                    }
+                </ul>
+            </div>
+        </div>
     </div>
 </header>
 <main>`;
@@ -340,7 +290,7 @@ const server = http.createServer((req, res) => {
         const progress = data.reports.filter(r => r.status === 'In Progress').length;
         const cleaned = data.reports.filter(r => r.status === 'Cleaned').length;
 
-        const html = renderHeader("Home", "/", isAdmin) + `
+        const html = renderHeader("Home", "/", isAdmin, "/") + `
 <section class="hero">
     <div id="auroraBg" class="soft-aurora-container"></div>
     <div class="container">
@@ -490,7 +440,7 @@ const server = http.createServer((req, res) => {
             }).join('') + `</div>`;
         }
 
-        const html = renderHeader("Public Dashboard", "/", isAdmin) + `
+        const html = renderHeader("Public Dashboard", "/", isAdmin, "/dashboard") + `
 <section class="section">
     <div class="container">
         <h2 class="section-title">Public Dashboard</h2>
@@ -617,7 +567,7 @@ const server = http.createServer((req, res) => {
             }).join('');
         }
 
-        const html = renderHeader("Admin Panel", "/", true) + `
+        const html = renderHeader("Admin Panel", "/", true, "/admin/dashboard") + `
 <div class="admin-shell">
     <aside class="admin-sidebar">
         <h3>Municipal Admin</h3>
@@ -703,7 +653,7 @@ const server = http.createServer((req, res) => {
 });
 
 function renderReportPage(error = "", success = "", isAdmin = false) {
-    return renderHeader("Report an Issue", "/", isAdmin) + `
+    return renderHeader("Report an Issue", "/", isAdmin, "/report") + `
 <section class="section">
     <div class="container">
         <div class="form-card">
@@ -771,7 +721,7 @@ function previewImage(input) {
 }
 
 function renderLoginPage(error = "") {
-    return renderHeader("Admin Login", "/", false) + `
+    return renderHeader("Admin Login", "/", false, "/admin/login") + `
 <div class="login-wrap" style="padding:60px 0;">
     <div class="form-card" style="max-width:420px;">
         <h2>🔐 Admin Login</h2>
