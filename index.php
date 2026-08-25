@@ -36,21 +36,36 @@ require_once 'includes/header.php';
         <h2 class="section-title">How It Works</h2>
         <p class="section-subtitle">A simple 3-step process to report and resolve civic cleanliness issues</p>
         <div class="grid-3">
-            <div class="info-card">
-                <div class="icon">📷</div>
-                <h3>1. Report</h3>
-                <p>Upload a photo of the unclean spot, add the location and a short description.</p>
-            </div>
-            <div class="info-card">
-                <div class="icon">🗂️</div>
-                <h3>2. Verify</h3>
-                <p>Municipal administrators review the report and assign it for cleaning.</p>
-            </div>
-            <div class="info-card">
-                <div class="icon">✅</div>
-                <h3>3. Resolve</h3>
-                <p>Once cleaned, the status updates publicly so everyone can see progress.</p>
-            </div>
+            <figure class="tilted-card-figure">
+                <div class="tilted-card-inner">
+                    <div class="tilted-card-overlay">
+                        <span class="icon">📷</span>
+                        <h3>1. Report</h3>
+                        <p>Upload a photo of the unclean spot, add the location and a short description.</p>
+                    </div>
+                </div>
+                <figcaption class="tilted-card-caption">Step 1: Citizen Submission</figcaption>
+            </figure>
+            <figure class="tilted-card-figure">
+                <div class="tilted-card-inner">
+                    <div class="tilted-card-overlay">
+                        <span class="icon">🗂️</span>
+                        <h3>2. Verify</h3>
+                        <p>Municipal administrators review the report and assign it for cleaning.</p>
+                    </div>
+                </div>
+                <figcaption class="tilted-card-caption">Step 2: Admin Verification</figcaption>
+            </figure>
+            <figure class="tilted-card-figure">
+                <div class="tilted-card-inner">
+                    <div class="tilted-card-overlay">
+                        <span class="icon">✅</span>
+                        <h3>3. Resolve</h3>
+                        <p>Once cleaned, the status updates publicly so everyone can see progress.</p>
+                    </div>
+                </div>
+                <figcaption class="tilted-card-caption">Step 3: Public Resolution</figcaption>
+            </figure>
         </div>
     </div>
 </section>

@@ -38,7 +38,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 4. React Bits <TextCursor /> Integration (Broom 🧹 Trail)
     initBroomCursor();
+
+    // 5. React Bits <TiltedCard /> Integration
+    initTiltedCards();
 });
+
+function initTiltedCards() {
+    const cards = document.querySelectorAll('.tilted-card-figure');
+    if (!cards || cards.length === 0) return;
+
+    cards.forEach(card => {
+        const inner = card.querySelector('.tilted-card-inner');
+        const caption = card.querySelector('.tilted-card-caption');
+        const rotateAmplitude = 14;
+        const scaleOnHover = 1.05;
+
+        let currentRotX = 0, currentRotY = 0, currentScale = 1;
+        let targetRotX = 0, targetRotY = 0, targetScale = 1;
+        let lastY = 0, velocityY = 0;
+        let mouseX = 0, mouseY = 0;
+
+        card.addEventListener('mouseenter', () => {
+            targetScale = scaleOnHover;
+            if (caption) caption.style.opacity = '1';
+        });
+
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const offsetX = e.clientX - rect.left - rect.width / 2;
+            const offsetY = e.clientY - rect.top - rect.height / 2;
+
+            targetRotX = (offsetY / (rect.height / 2)) * -rotateAmplitude;
+            targetRotY = (offsetX / (rect.width / 2)) * rotateAmplitude;
+
+            velocityY = offsetY - lastY;
+            lastY = offsetY;
+
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+
+            if (caption) {
+                caption.style.transform = `translate(${mouseX + 10}px, ${mouseY + 10}px) rotate(${-velocityY * 0.4}deg)`;
+            }
+        });
+
+        card.addEventListener('mouseleave', () => {
+            targetRotX = 0;
+            targetRotY = 0;
+            targetScale = 1;
+            if (caption) caption.style.opacity = '0';
+        });
+
+        function updateSpring() {
+            currentRotX += 0.08 * (targetRotX - currentRotX);
+            currentRotY += 0.08 * (targetRotY - currentRotY);
+            currentScale += 0.08 * (targetScale - currentScale);
+
+            if (inner) {
+                inner.style.transform = `rotateX(${currentRotX.toFixed(2)}deg) rotateY(${currentRotY.toFixed(2)}deg) scale(${currentScale.toFixed(3)})`;
+            }
+
+            requestAnimationFrame(updateSpring);
+        }
+        requestAnimationFrame(updateSpring);
+    });
+}
 
 function initSoftAurora(containerId) {
     const container = document.getElementById(containerId);
