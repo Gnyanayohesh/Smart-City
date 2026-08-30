@@ -36,28 +36,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // 3. React Bits <GhostFibers /> Integration (Hero Green Background)
     if (document.getElementById('ghostFibersBg')) {
         initGhostFibers('ghostFibersBg', {
-            lineColor: '#072e1f',
-            glowColor: '#34d399',
-            speed: 0.2,
+            lineColor: '#140E35',
+            glowColor: '#38ef7d',
+            speed: 0.25,
             scale: 2.0,
             rotation: 0,
             rotationSpeed: 0.25,
-            layers: 4,
-            waveAmplitude: 0.015,
+            layers: 5,
+            waveAmplitude: 0.018,
             waveFrequency: 3,
             waveSpeed: 0.15,
             layerSpeed: 0.08,
-            twist: 0.1,
+            twist: 0.12,
             twistFrequency: 5,
             twistSpeed: 1.2,
             lineFrequency: 5,
             lineSpacing: 2,
-            lineSharpness: 16,
-            glowFalloff: 10,
-            glowIntensity: 1.6,
-            brightness: 2.0,
-            blueBoost: 1.2,
-            vignette: 0.8,
+            lineSharpness: 14,
+            glowFalloff: 8,
+            glowIntensity: 2.2,
+            brightness: 2.2,
+            blueBoost: 1.25,
+            vignette: 0.75,
             grain: 0.05,
             lightMode: false
         });
@@ -138,42 +138,53 @@ function initGhostFibers(containerId, options) {
     if (!container) return;
 
     options = options || {};
-    const lineColor = options.lineColor || '#072e1f';
-    const glowColor = options.glowColor || '#34d399';
-    const speed = options.speed !== undefined ? options.speed : 0.2;
+    const lineColor = options.lineColor || '#140E35';
+    const glowColor = options.glowColor || '#38ef7d';
+    const speed = options.speed !== undefined ? options.speed : 0.25;
     const scale = options.scale !== undefined ? options.scale : 2.0;
     const rotation = options.rotation !== undefined ? options.rotation : 0;
     const rotationSpeed = options.rotationSpeed !== undefined ? options.rotationSpeed : 0.25;
-    const layers = options.layers !== undefined ? Math.min(Math.max(Math.round(options.layers), 1), 10) : 4;
-    const waveAmplitude = options.waveAmplitude !== undefined ? options.waveAmplitude : 0.015;
+    const layers = options.layers !== undefined ? Math.min(Math.max(Math.round(options.layers), 1), 10) : 5;
+    const waveAmplitude = options.waveAmplitude !== undefined ? options.waveAmplitude : 0.018;
     const waveFrequency = options.waveFrequency !== undefined ? options.waveFrequency : 3.0;
     const waveSpeed = options.waveSpeed !== undefined ? options.waveSpeed : 0.15;
     const layerSpeed = options.layerSpeed !== undefined ? options.layerSpeed : 0.08;
-    const twist = options.twist !== undefined ? options.twist : 0.1;
+    const twist = options.twist !== undefined ? options.twist : 0.12;
     const twistFrequency = options.twistFrequency !== undefined ? options.twistFrequency : 5.0;
     const twistSpeed = options.twistSpeed !== undefined ? options.twistSpeed : 1.2;
     const lineFrequency = options.lineFrequency !== undefined ? options.lineFrequency : 5.0;
     const lineSpacing = options.lineSpacing !== undefined ? options.lineSpacing : 2.0;
-    const lineSharpness = options.lineSharpness !== undefined ? options.lineSharpness : 16.0;
-    const glowFalloff = options.glowFalloff !== undefined ? options.glowFalloff : 10.0;
-    const glowIntensity = options.glowIntensity !== undefined ? options.glowIntensity : 1.6;
-    const brightness = options.brightness !== undefined ? options.brightness : 2.0;
-    const blueBoost = options.blueBoost !== undefined ? options.blueBoost : 1.2;
-    const vignette = options.vignette !== undefined ? options.vignette : 0.8;
+    const lineSharpness = options.lineSharpness !== undefined ? options.lineSharpness : 14.0;
+    const glowFalloff = options.glowFalloff !== undefined ? options.glowFalloff : 8.0;
+    const glowIntensity = options.glowIntensity !== undefined ? options.glowIntensity : 2.2;
+    const brightness = options.brightness !== undefined ? options.brightness : 2.2;
+    const blueBoost = options.blueBoost !== undefined ? options.blueBoost : 1.25;
+    const vignette = options.vignette !== undefined ? options.vignette : 0.75;
     const grain = options.grain !== undefined ? options.grain : 0.05;
     const lightMode = options.lightMode ? 1.0 : 0.0;
     const dpr = Math.min(Math.max(options.dpr || (window.devicePixelRatio || 1), 0.5), 2);
     const targetFps = options.fps || 60;
 
-    const canvas = document.createElement('canvas');
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.display = 'block';
-    canvas.setAttribute('aria-hidden', 'true');
-    container.appendChild(canvas);
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.display = 'block';
+        canvas.setAttribute('aria-hidden', 'true');
+        container.appendChild(canvas);
+    }
 
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return;
+    const gl = canvas.getContext('webgl2', { alpha: false, antialias: false }) ||
+               canvas.getContext('webgl', { alpha: false, antialias: false }) ||
+               canvas.getContext('experimental-webgl');
+    if (!gl) {
+        console.warn("WebGL not supported for GhostFibers");
+        return;
+    }
 
     const isWebGL2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
 
@@ -181,7 +192,7 @@ function initGhostFibers(containerId, options) {
         const value = hex.trim().replace(/^#/, '');
         const normalized = value.length === 3 ? value.replace(/./g, c => c + c) : value;
         const match = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(normalized);
-        if (!match) return [1, 1, 1];
+        if (!match) return [0.08, 0.05, 0.2];
         return [parseInt(match[1], 16) / 255, parseInt(match[2], 16) / 255, parseInt(match[3], 16) / 255];
     }
 
@@ -321,7 +332,7 @@ void main() {
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.warn('Shader compile failed:', gl.getShaderInfoLog(shader));
+            console.error('GhostFibers Shader compile error:', gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
             return null;
         }
@@ -337,7 +348,7 @@ void main() {
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.warn('Program link failed:', gl.getProgramInfoLog(program));
+        console.error('GhostFibers Program link error:', gl.getProgramInfoLog(program));
         return;
     }
     gl.useProgram(program);
@@ -418,17 +429,23 @@ void main() {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     function setSize() {
+        const parent = container.parentElement || container;
         const rect = container.getBoundingClientRect();
-        const width = Math.max(1, Math.floor(rect.width * dpr));
-        const height = Math.max(1, Math.floor(rect.height * dpr));
-        canvas.width = width;
-        canvas.height = height;
-        gl.viewport(0, 0, width, height);
-        gl.uniform2f(uResolution, width, height);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        const w = Math.max(1, Math.floor((rect.width || container.clientWidth || parent.clientWidth || window.innerWidth) * dpr));
+        const h = Math.max(1, Math.floor((rect.height || container.clientHeight || parent.clientHeight || 450) * dpr));
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+            gl.viewport(0, 0, w, h);
+            gl.uniform2f(uResolution, w, h);
+        }
     }
 
     function renderFrame() {
+        gl.useProgram(program);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
@@ -440,11 +457,14 @@ void main() {
         frameId = 0;
         if (!canAnimate()) return;
 
+        setSize();
+
         const delta = Math.min((now - previousTime) / 1000, 0.1);
         previousTime = now;
         elapsed += delta;
 
         if (now - lastRenderTime >= 1000 / targetFps - 0.5) {
+            gl.useProgram(program);
             gl.uniform1f(uTime, elapsed);
             renderFrame();
             lastRenderTime = now;
@@ -467,6 +487,7 @@ void main() {
     if (typeof ResizeObserver !== 'undefined') {
         const resizeObserver = new ResizeObserver(setSize);
         resizeObserver.observe(container);
+        if (container.parentElement) resizeObserver.observe(container.parentElement);
     }
     window.addEventListener('resize', setSize);
 

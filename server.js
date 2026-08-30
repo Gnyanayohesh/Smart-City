@@ -155,6 +155,12 @@ function getCurrentUser(req) {
 function renderHeader(pageTitle = "", basePath = "/", currentUser = null, currentPath = "/") {
     const role = currentUser ? currentUser.role : null;
     const userName = currentUser ? currentUser.full_name : '';
+    let liveCss = cachedCss;
+    try {
+        if (fs.existsSync(CSS_FILE)) {
+            liveCss = fs.readFileSync(CSS_FILE, 'utf8');
+        }
+    } catch (e) {}
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -168,7 +174,7 @@ function renderHeader(pageTitle = "", basePath = "/", currentUser = null, curren
 <link rel="stylesheet" href="/assets/css/style.css">
 <style>
 /* Embedded Styles to ensure 100% reliable rendering anywhere */
-${cachedCss}
+${liveCss}
 
 body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
