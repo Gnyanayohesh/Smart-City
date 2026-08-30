@@ -209,26 +209,26 @@ body {
                         }
                     </ul>
                 </div>
-                <button class="mobile-menu-button mobile-only" id="mobileMenuBtn" aria-label="Toggle menu">
+                <button class="mobile-menu-button mobile-only" id="mobileMenuBtn" aria-label="Toggle menu" type="button" aria-expanded="false">
                     <span class="hamburger-line"></span>
                     <span class="hamburger-line"></span>
                 </button>
             </nav>
-            <div class="mobile-menu-popover mobile-only" id="mobileMenuPopover">
+            <div class="mobile-menu-popover mobile-only" id="mobileMenuPopover" aria-hidden="true">
                 <ul class="mobile-menu-list">
-                    <li><a href="/" class="mobile-menu-link ${currentPath === '/' ? 'is-active' : ''}">Home</a></li>
-                    <li><a href="/report" class="mobile-menu-link ${currentPath === '/report' ? 'is-active' : ''}">Report Issue</a></li>
-                    <li><a href="/dashboard" class="mobile-menu-link ${currentPath === '/dashboard' ? 'is-active' : ''}">Public Dashboard</a></li>
+                    <li><a href="/" class="mobile-menu-link ${currentPath === '/' ? 'is-active' : ''}">🏠 Home</a></li>
+                    <li><a href="/report" class="mobile-menu-link ${currentPath === '/report' ? 'is-active' : ''}">📸 Report Issue</a></li>
+                    <li><a href="/dashboard" class="mobile-menu-link ${currentPath === '/dashboard' ? 'is-active' : ''}">📊 Public Dashboard</a></li>
                     
                     ${role === 'admin'
                         ? `<li><a href="/admin/dashboard" class="mobile-menu-link ${currentPath.startsWith('/admin') ? 'is-active' : ''}">👑 Admin Panel</a></li>
-                           <li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout</a></li>`
+                           <li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">🚪 Logout</a></li>`
                         : role === 'cleaner'
                         ? `<li><a href="/cleaner/dashboard" class="mobile-menu-link ${currentPath.startsWith('/cleaner') ? 'is-active' : ''}">🧹 Cleaner Portal</a></li>
-                           <li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout (Cleaner)</a></li>`
+                           <li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">🚪 Logout (Cleaner)</a></li>`
                         : role === 'user'
-                        ? `<li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">Logout (${escapeHtml(userName || 'Citizen')})</a></li>`
-                        : `<li><a href="/login" class="mobile-menu-link ${currentPath === '/login' ? 'is-active' : ''}">Login</a></li>`
+                        ? `<li><a href="/logout" class="mobile-menu-link" style="background:#ffe3e3; color:#d64545 !important;">🚪 Logout (${escapeHtml(userName || 'Citizen')})</a></li>`
+                        : `<li><a href="/login" class="mobile-menu-link ${currentPath === '/login' ? 'is-active' : ''}">🔑 Login</a></li>`
                     }
                 </ul>
             </div>
