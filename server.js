@@ -337,7 +337,7 @@ const server = http.createServer((req, res) => {
 
         const html = renderHeader("Home", "/", currentUser, "/") + `
 <section class="hero">
-    <div id="auroraBg" class="soft-aurora-container"></div>
+    <div id="ghostFibersBg" class="ghost-fibers-container"></div>
     <div class="container">
         <h1>Clean Communities Start with You</h1>
         <p>Spot civic cleanliness issues in Tiruchirappalli? Snap a photo, report the location, and track municipal sanitation resolution in real time.</p>
