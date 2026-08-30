@@ -743,3 +743,16 @@ table.admin-table .desc-cell { max-width: 240px; }
     .admin-shell { flex-direction: column; }
     .admin-sidebar { width: 100%; }
 }
+
+/* ---------- React Bits <ClickSpark /> ---------- */
+.click-spark-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    pointer-events: none;
+    z-index: 999999;
+    display: block;
+}
+

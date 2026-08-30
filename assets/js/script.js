@@ -68,7 +68,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // 4. React Bits <TextCursor /> Integration (Broom 🧹 Trail)
     initBroomCursor();
 
-    // 5. React Bits <TiltedCard /> Integration
+    // 5. React Bits <ClickSpark /> Integration (Cursor Click Sparks)
+    initClickSpark({
+        sparkColor: '#e6a417',
+        sparkSize: 12,
+        sparkRadius: 22,
+        sparkCount: 8,
+        duration: 450,
+        extraScale: 1.1
+    });
+
+    // 6. React Bits <TiltedCard /> Integration
     initTiltedCards();
 });
 
@@ -852,4 +862,117 @@ function initBroomCursor() {
             removePoint(trail.shift());
         }
     }, removalInterval);
+}
+
+// React Bits <ClickSpark /> Cursor Click Integration
+function initClickSpark(options) {
+    options = options || {};
+    const sparkColor = options.sparkColor || '#e6a417';
+    const sparkColors = options.sparkColors || ['#e6a417', '#2ba86f', '#38ef7d', '#fadb5f'];
+    const sparkSize = options.sparkSize !== undefined ? options.sparkSize : 12;
+    const sparkRadius = options.sparkRadius !== undefined ? options.sparkRadius : 22;
+    const sparkCount = options.sparkCount !== undefined ? options.sparkCount : 8;
+    const duration = options.duration !== undefined ? options.duration : 450;
+    const extraScale = options.extraScale !== undefined ? options.extraScale : 1.1;
+    const easing = options.easing || 'ease-out';
+
+    let canvas = document.querySelector('.click-spark-canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.className = 'click-spark-canvas';
+        document.body.appendChild(canvas);
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let sparks = [];
+    let animationId = null;
+
+    function resizeCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        ctx.scale(dpr, dpr);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function easeFunc(t) {
+        switch (easing) {
+            case 'linear':
+                return t;
+            case 'ease-in':
+                return t * t;
+            case 'ease-in-out':
+                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            default:
+                return t * (2 - t);
+        }
+    }
+
+    function draw(timestamp) {
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+        sparks = sparks.filter(spark => {
+            const elapsed = timestamp - spark.startTime;
+            if (elapsed >= duration) {
+                return false;
+            }
+
+            const progress = elapsed / duration;
+            const eased = easeFunc(progress);
+
+            const distance = eased * sparkRadius * extraScale;
+            const lineLength = sparkSize * (1 - eased);
+
+            const x1 = spark.x + distance * Math.cos(spark.angle);
+            const y1 = spark.y + distance * Math.sin(spark.angle);
+            const x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle);
+            const y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle);
+
+            ctx.strokeStyle = spark.color;
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = spark.color;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            return true;
+        });
+
+        if (sparks.length > 0) {
+            animationId = requestAnimationFrame(draw);
+        } else {
+            animationId = null;
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        }
+    }
+
+    window.addEventListener('pointerdown', function (e) {
+        const x = e.clientX;
+        const y = e.clientY;
+        const now = performance.now();
+
+        for (let i = 0; i < sparkCount; i++) {
+            const color = sparkColors ? sparkColors[i % sparkColors.length] : sparkColor;
+            sparks.push({
+                x: x,
+                y: y,
+                angle: (2 * Math.PI * i) / sparkCount,
+                startTime: now,
+                color: color
+            });
+        }
+
+        if (!animationId) {
+            animationId = requestAnimationFrame(draw);
+        }
+    }, { passive: true });
 }
