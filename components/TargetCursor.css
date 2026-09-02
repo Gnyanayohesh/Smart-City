@@ -1,3 +1,8 @@
+body.target-cursor-active,
+body.target-cursor-active * {
+  cursor: none !important;
+}
+
 .target-cursor-wrapper {
   position: fixed;
   top: 0;

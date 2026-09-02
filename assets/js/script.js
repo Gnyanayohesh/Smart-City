@@ -91,13 +91,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 5. React Bits <TargetCursor /> Integration
     initTargetCursor({
-        targetSelector: '.cursor-target, .btn, button, a.nav-link, .tilted-card-figure',
+        targetSelector: '.cursor-target, .pill, .pill-logo, .mobile-menu-link, .mobile-menu-button, .btn, button, a.nav-link, a.pill, .tilted-card-figure',
         spinDuration: 2,
         hideDefaultCursor: true,
         hoverDuration: 0.2,
         parallaxOn: true,
-        cursorColor: '#ffffff',
-        cursorColorOnTarget: '#8b5cf6'
+        cursorColor: '#ffffff'
     });
 });
 
@@ -591,7 +590,7 @@ function initTargetCursor(options) {
     if (isMobile) return;
 
     options = options || {};
-    const targetSelector = options.targetSelector || '.cursor-target, .btn, a, button, .tilted-card-figure';
+    const targetSelector = options.targetSelector || '.cursor-target, .pill, .pill-logo, .mobile-menu-link, .mobile-menu-button, .btn, button, a.nav-link, a.pill, .tilted-card-figure';
     const spinDuration = options.spinDuration !== undefined ? options.spinDuration : 2;
     const hideDefaultCursor = options.hideDefaultCursor !== false;
     const hoverDuration = options.hoverDuration !== undefined ? options.hoverDuration : 0.2;
@@ -660,6 +659,7 @@ function initTargetCursor(options) {
         const corners = cursor.querySelectorAll('.target-cursor-corner');
 
         if (hideDefaultCursor) {
+            document.body.classList.add('target-cursor-active');
             document.body.style.cursor = 'none';
         }
 

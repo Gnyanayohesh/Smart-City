@@ -34,7 +34,7 @@ const getContainingBlockOffset = block => {
 };
 
 const TargetCursor = ({
-  targetSelector = '.cursor-target',
+  targetSelector = '.cursor-target, .pill, .pill-logo, .mobile-menu-link, .btn, button, a.nav-link, .tilted-card-figure',
   spinDuration = 2,
   hideDefaultCursor = true,
   hoverDuration = 0.2,
@@ -87,6 +87,7 @@ const TargetCursor = ({
 
     const originalCursor = document.body.style.cursor;
     if (hideDefaultCursor) {
+      document.body.classList.add('target-cursor-active');
       document.body.style.cursor = 'none';
     }
 
@@ -371,6 +372,7 @@ const TargetCursor = ({
       }
 
       spinTl.current?.kill();
+      document.body.classList.remove('target-cursor-active');
       document.body.style.cursor = originalCursor;
 
       isActiveRef.current = false;
