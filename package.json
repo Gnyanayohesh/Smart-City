@@ -9,7 +9,12 @@
   "dependencies": {
     "ogl": "^1.0.11"
   },
-  "keywords": ["smart-city", "cleanliness", "reporting", "sdg-11"],
+  "keywords": [
+    "smart-city",
+    "cleanliness",
+    "reporting",
+    "sdg-11"
+  ],
   "author": "CleanCity Team",
   "license": "MIT"
 }

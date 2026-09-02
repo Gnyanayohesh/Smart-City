@@ -70,6 +70,21 @@
   ],
   "reports": [
     {
+      "report_id": 9,
+      "reporter_name": "yogi",
+      "reporter_contact": "343545435",
+      "description": "drainage water",
+      "location_area": "joseph college",
+      "latitude": null,
+      "longitude": null,
+      "photo_path": "/uploads/report_1788361042222_7423.png",
+      "status": "Pending",
+      "assigned_cleaner_id": null,
+      "assigned_cleaner_name": "Unassigned",
+      "assignment_type": "Unassigned",
+      "submitted_at": "2026-09-02T14:57:22.225Z"
+    },
+    {
       "report_id": 8,
       "reporter_name": "TestUser4",
       "reporter_contact": "9999999994",

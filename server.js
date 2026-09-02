@@ -465,7 +465,7 @@ const server = http.createServer((req, res) => {
 
         const html = renderHeader("Home", "/", currentUser, "/") + `
 <section class="hero">
-    <div id="gradientWavesBg" class="gradient-waves-container"></div>
+    <div id="galaxyBg" class="galaxy-container"></div>
     <div class="container">
         <h1>Clean Communities Start with You</h1>
         <p>Spot civic cleanliness issues in Tiruchirappalli? Snap a photo, report the location, and track municipal sanitation resolution in real time.</p>

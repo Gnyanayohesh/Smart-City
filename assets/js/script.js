@@ -63,29 +63,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 3. React Bits <GradientWaves /> Integration (Hero Background)
-    if (document.getElementById('gradientWavesBg')) {
-        initGradientWaves('gradientWavesBg', {
-            horizonColor: '#5227FF',
-            waveColor: '#FF9FFC',
-            crestColor: '#FFFFFF',
-            speed: 0.4,
-            amplitude: 2.5,
-            waveScale: 0.6,
-            waveRatio: 0.9,
-            swell: 35,
-            turbulence: 20,
-            tilt: 1.11,
-            zoom: 1.0,
-            height: 5.5,
-            fogDepth: 15,
-            detail: 'medium',
-            brightness: 1.0,
-            opacity: 1.0,
+    // 3. React Bits <Galaxy /> Integration (Hero Background)
+    if (document.getElementById('galaxyBg')) {
+        initGalaxy('galaxyBg', {
+            focal: [0.5, 0.5],
+            rotation: [1.0, 0.0],
+            starSpeed: 0.5,
+            density: 1.5,
+            hueShift: 240,
+            disableAnimation: false,
+            speed: 1.0,
             mouseInteraction: true,
-            parallaxStrength: 0.5,
-            grain: true,
-            grainIntensity: 0.05
+            glowIntensity: 0.5,
+            saturation: 0.8,
+            mouseRepulsion: true,
+            repulsionStrength: 2,
+            twinkleIntensity: 0.3,
+            rotationSpeed: 0.1,
+            autoCenterRepulsion: 0,
+            transparent: true,
+            lightMode: false
         });
     }
 
@@ -153,44 +150,29 @@ function initTiltedCards() {
         requestAnimationFrame(updateSpring);
     });
 }
-// React Bits <GradientWaves /> Background Implementation
-function initGradientWaves(containerId, options) {
+// React Bits <Galaxy /> Background Implementation
+function initGalaxy(containerId, options) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     options = options || {};
-    const horizonColor = options.horizonColor || '#5227FF';
-    const waveColor = options.waveColor || '#FF9FFC';
-    const crestColor = options.crestColor || '#FFFFFF';
-    const speed = options.speed !== undefined ? options.speed : 0.4;
-    const amplitude = options.amplitude !== undefined ? options.amplitude : 2.5;
-    const waveScale = options.waveScale !== undefined ? options.waveScale : 0.6;
-    const waveRatio = options.waveRatio !== undefined ? options.waveRatio : 0.9;
-    const swell = options.swell !== undefined ? options.swell : 35.0;
-    const turbulence = options.turbulence !== undefined ? options.turbulence : 20.0;
-    const tilt = options.tilt !== undefined ? options.tilt : 1.11;
-    const zoom = options.zoom !== undefined ? options.zoom : 1.0;
-    const height = options.height !== undefined ? options.height : 5.5;
-    const fogDepth = options.fogDepth !== undefined ? options.fogDepth : 15.0;
-    const detail = options.detail || 'medium';
-    const brightness = options.brightness !== undefined ? options.brightness : 1.0;
-    const opacity = options.opacity !== undefined ? options.opacity : 1.0;
-    const grain = options.grain !== false;
-    const grainIntensity = options.grainIntensity !== undefined ? options.grainIntensity : 0.05;
+    const focal = options.focal || [0.5, 0.5];
+    const rotation = options.rotation || [1.0, 0.0];
+    const starSpeed = options.starSpeed !== undefined ? options.starSpeed : 0.5;
+    const density = options.density !== undefined ? options.density : 1.5;
+    const hueShift = options.hueShift !== undefined ? options.hueShift : 240.0;
+    const disableAnimation = options.disableAnimation === true;
+    const speed = options.speed !== undefined ? options.speed : 1.0;
     const mouseInteraction = options.mouseInteraction !== false;
-    const parallaxStrength = options.parallaxStrength !== undefined ? options.parallaxStrength : 0.5;
-
-    function detailToSteps(d) {
-        if (d === 'low') return 40.0;
-        if (d === 'high') return 110.0;
-        return 70.0;
-    }
-
-    function hexToRgb(hex) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        if (!result) return [1, 1, 1];
-        return [parseInt(result[1], 16) / 255, parseInt(result[2], 16) / 255, parseInt(result[3], 16) / 255];
-    }
+    const glowIntensity = options.glowIntensity !== undefined ? options.glowIntensity : 0.5;
+    const saturation = options.saturation !== undefined ? options.saturation : 0.8;
+    const mouseRepulsion = options.mouseRepulsion !== false;
+    const repulsionStrength = options.repulsionStrength !== undefined ? options.repulsionStrength : 2.0;
+    const twinkleIntensity = options.twinkleIntensity !== undefined ? options.twinkleIntensity : 0.3;
+    const rotationSpeed = options.rotationSpeed !== undefined ? options.rotationSpeed : 0.1;
+    const autoCenterRepulsion = options.autoCenterRepulsion !== undefined ? options.autoCenterRepulsion : 0.0;
+    const transparent = options.transparent !== false;
+    const lightMode = options.lightMode === true;
 
     let canvas = container.querySelector('canvas');
     if (!canvas) {
@@ -205,132 +187,198 @@ function initGradientWaves(containerId, options) {
         container.appendChild(canvas);
     }
 
-    const gl = canvas.getContext('webgl2', {
-        alpha: true,
-        premultipliedAlpha: true,
+    const gl = canvas.getContext('webgl', {
+        alpha: transparent,
+        premultipliedAlpha: false,
         antialias: false
-    }) || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    }) || canvas.getContext('experimental-webgl');
 
     if (!gl) {
-        console.warn("WebGL not supported for GradientWaves");
+        console.warn("WebGL not supported for Galaxy");
         return;
     }
 
-    const isWebGL2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
+    if (lightMode) {
+        gl.clearColor(1, 1, 1, 1);
+    } else if (transparent) {
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.clearColor(0, 0, 0, 0);
+    } else {
+        gl.clearColor(0, 0, 0, 1);
+    }
 
-    const vsSource = isWebGL2 ? `#version 300 es
-in vec2 position;
-void main() {
-  gl_Position = vec4(position, 0.0, 1.0);
-}
-` : `
+    const vsSource = `
+attribute vec2 uv;
 attribute vec2 position;
+
+varying vec2 vUv;
+
 void main() {
+  vUv = uv;
   gl_Position = vec4(position, 0.0, 1.0);
 }
 `;
 
-    const fsSource = (isWebGL2 ? `#version 300 es\nprecision highp float;\n` : `precision highp float;\n#define fragColor gl_FragColor\n`) + `
-uniform vec2 iResolution;
-uniform float iTime;
+    const fsSource = `
+precision highp float;
+
+uniform float uTime;
+uniform vec3 uResolution;
+uniform vec2 uFocal;
+uniform vec2 uRotation;
+uniform float uStarSpeed;
+uniform float uDensity;
+uniform float uHueShift;
 uniform float uSpeed;
-uniform float uAmplitude;
-uniform float uWaveScale;
-uniform float uWaveRatio;
-uniform float uSwell;
-uniform float uTurbulence;
-uniform float uTilt;
-uniform float uZoom;
-uniform float uHeight;
-uniform float uFogDepth;
-uniform float uSteps;
-uniform float uBrightness;
-uniform float uOpacity;
-uniform float uGrain;
-uniform float uGrainIntensity;
 uniform vec2 uMouse;
-uniform float uParallax;
-uniform bool uEnableMouse;
-uniform vec3 uHorizonColor;
-uniform vec3 uWaveColor;
-uniform vec3 uCrestColor;
-${isWebGL2 ? 'out vec4 fragColor;' : ''}
+uniform float uGlowIntensity;
+uniform float uSaturation;
+uniform bool uMouseRepulsion;
+uniform float uTwinkleIntensity;
+uniform float uRotationSpeed;
+uniform float uRepulsionStrength;
+uniform float uMouseActiveFactor;
+uniform float uAutoCenterRepulsion;
+uniform bool uTransparent;
+uniform float uLightMode;
 
-const float MAX_DIST = 20000.0;
+varying vec2 vUv;
 
-float hash21(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-  p3 += dot(p3, p3.yzx + 33.33);
-  return fract((p3.x + p3.y) * p3.z);
+#define NUM_LAYER 4.0
+#define STAR_COLOR_CUTOFF 0.2
+#define MAT45 mat2(0.7071, -0.7071, 0.7071, 0.7071)
+#define PERIOD 3.0
+
+float Hash21(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
 }
 
-float plasma(vec3 r, vec2 freq, vec4 tc) {
-  float mx = r.x + tc.x;
-  mx += uSwell * sin((r.y + mx) / 20.0 + tc.y);
-  float my = r.y - tc.z;
-  my += uTurbulence * cos(r.x / 23.0 + tc.w);
-  return r.z - (sin(mx * freq.x) * uAmplitude + sin(my * freq.y) * uAmplitude + uHeight);
+float tri(float x) {
+  return abs(fract(x) * 2.0 - 1.0);
 }
 
-float raymarch(vec3 pos, vec3 dir, vec2 freq, vec4 tc) {
-  float dist = 0.0;
-  for (int i = 0; i < 128; i++) {
-    if (float(i) >= uSteps) break;
-    float dscene = plasma(pos + dist * dir, freq, tc);
-    if (abs(dscene) < 0.1) break;
-    dist += 0.9 * dscene;
-    if (!(abs(dist) < MAX_DIST)) return MAX_DIST;
+float tris(float x) {
+  float t = fract(x);
+  return 1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0));
+}
+
+float trisn(float x) {
+  float t = fract(x);
+  return 2.0 * (1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0))) - 1.0;
+}
+
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+float Star(vec2 uv, float flare) {
+  float d = length(uv);
+  float m = (0.05 * uGlowIntensity) / d;
+  float rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+  m += rays * flare * uGlowIntensity;
+  uv *= MAT45;
+  rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+  m += rays * 0.3 * flare * uGlowIntensity;
+  m *= smoothstep(1.0, 0.2, d);
+  return m;
+}
+
+vec3 StarLayer(vec2 uv) {
+  vec3 col = vec3(0.0);
+
+  vec2 gv = fract(uv) - 0.5; 
+  vec2 id = floor(uv);
+
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      vec2 offset = vec2(float(x), float(y));
+      vec2 si = id + vec2(float(x), float(y));
+      float seed = Hash21(si);
+      float size = fract(seed * 345.32);
+      float glossLocal = tri(uStarSpeed / (PERIOD * seed + 1.0));
+      float flareSize = smoothstep(0.9, 1.0, size) * glossLocal;
+
+      float red = smoothstep(STAR_COLOR_CUTOFF, 1.0, Hash21(si + 1.0)) + STAR_COLOR_CUTOFF;
+      float blu = smoothstep(STAR_COLOR_CUTOFF, 1.0, Hash21(si + 3.0)) + STAR_COLOR_CUTOFF;
+      float grn = min(red, blu) * seed;
+      vec3 base = vec3(red, grn, blu);
+      
+      float hue = atan(base.g - base.r, base.b - base.r) / (2.0 * 3.14159) + 0.5;
+      hue = fract(hue + uHueShift / 360.0);
+      float sat = length(base - vec3(dot(base, vec3(0.299, 0.587, 0.114)))) * uSaturation;
+      float val = max(max(base.r, base.g), base.b);
+      base = hsv2rgb(vec3(hue, sat, val));
+
+      vec2 pad = vec2(tris(seed * 34.0 + uTime * uSpeed / 10.0), tris(seed * 38.0 + uTime * uSpeed / 30.0)) - 0.5;
+
+      float star = Star(gv - offset - pad, flareSize);
+      vec3 color = base;
+
+      float twinkle = trisn(uTime * uSpeed + seed * 6.2831) * 0.5 + 1.0;
+      twinkle = mix(1.0, twinkle, uTwinkleIntensity);
+      star *= twinkle;
+      
+      col += star * size * color;
+    }
   }
-  return dist;
+
+  return col;
 }
 
 void main() {
-  float T = iTime * uSpeed;
-  vec2 freq = vec2(uWaveScale / 7.0, (uWaveScale * uWaveRatio) / 3.0);
-  vec4 tc = vec4(T / 0.130, T / 0.810, T / 0.200, T / 0.710);
-  float c, s;
-  float vfov = (3.14159 / 2.3) / max(uZoom, 0.05);
-  vec3 cam = vec3(0.0, 0.0, 30.0);
-  vec2 uv = (gl_FragCoord.xy / iResolution.xy) - 0.5;
-  uv.x *= iResolution.x / iResolution.y;
-  uv.y *= -1.0;
+  vec2 focalPx = uFocal * uResolution.xy;
+  vec2 uv = (vUv * uResolution.xy - focalPx) / uResolution.y;
 
-  vec3 dir = vec3(0.0, 0.0, -1.0);
-  float ulen = length(uv);
-  float xrot = vfov * ulen;
-  c = cos(xrot); s = sin(xrot);
-  dir = mat3(1.0, 0.0, 0.0, 0.0, c, -s, 0.0, s, c) * dir;
-  vec2 nuv = ulen > 1e-5 ? uv / ulen : vec2(1.0, 0.0);
-  c = nuv.x; s = nuv.y;
-  dir = mat3(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0) * dir;
-  c = cos(uTilt); s = sin(uTilt);
-  dir = mat3(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c) * dir;
-
-  if (uEnableMouse) {
-    float yaw = (uMouse.x - 0.5) * uParallax * 0.4;
-    float pitch = (uMouse.y - 0.5) * uParallax * 0.4;
-    c = cos(yaw); s = sin(yaw);
-    dir = mat3(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c) * dir;
-    c = cos(pitch); s = sin(pitch);
-    dir = mat3(1.0, 0.0, 0.0, 0.0, c, -s, 0.0, s, c) * dir;
+  vec2 mouseNorm = uMouse - vec2(0.5);
+  
+  if (uAutoCenterRepulsion > 0.0) {
+    vec2 centerUV = vec2(0.0, 0.0);
+    float centerDist = length(uv - centerUV);
+    vec2 repulsion = normalize(uv - centerUV) * (uAutoCenterRepulsion / (centerDist + 0.1));
+    uv += repulsion * 0.05;
+  } else if (uMouseRepulsion) {
+    vec2 mousePosUV = (uMouse * uResolution.xy - focalPx) / uResolution.y;
+    float mouseDist = length(uv - mousePosUV);
+    vec2 repulsion = normalize(uv - mousePosUV) * (uRepulsionStrength / (mouseDist + 0.1));
+    uv += repulsion * 0.05 * uMouseActiveFactor;
+  } else {
+    vec2 mouseOffset = mouseNorm * 0.1 * uMouseActiveFactor;
+    uv += mouseOffset;
   }
 
-  float dist = raymarch(cam, dir, freq, tc);
-  vec3 pos = cam + dist * dir;
+  float autoRotAngle = uTime * uRotationSpeed;
+  mat2 autoRot = mat2(cos(autoRotAngle), -sin(autoRotAngle), sin(autoRotAngle), cos(autoRotAngle));
+  uv = autoRot * uv;
 
-  float t = clamp(uFogDepth / max(dist, 0.001), 0.0, 1.0);
-  vec3 body = mix(uWaveColor, uCrestColor, clamp(pos.z * 0.08 + 0.5, 0.0, 1.0));
-  vec3 col = mix(uHorizonColor, body, t);
-  col *= uBrightness;
-  col = clamp(col, 0.0, 1.0);
+  uv = mat2(uRotation.x, -uRotation.y, uRotation.y, uRotation.x) * uv;
 
-  float alpha = clamp(t, 0.0, 1.0) * uOpacity;
-  if (uGrain > 0.5) {
-    float g = hash21(gl_FragCoord.xy + mod(iTime, 64.0) * 11.0);
-    alpha += (g - 0.5) * uGrainIntensity;
+  vec3 col = vec3(0.0);
+
+  for (float i = 0.0; i < 1.0; i += 1.0 / NUM_LAYER) {
+    float depth = fract(i + uStarSpeed * uSpeed);
+    float scale = mix(20.0 * uDensity, 0.5 * uDensity, depth);
+    float fade = depth * smoothstep(1.0, 0.9, depth);
+    col += StarLayer(uv * scale + i * 453.32) * fade;
   }
-  alpha = clamp(alpha, 0.0, 1.0);
-  fragColor = vec4(col * alpha, alpha);
+
+  if (uLightMode > 0.5) {
+    float energy = max(max(col.r, col.g), col.b);
+    float coverage = clamp(smoothstep(0.0, 0.42, energy) * 0.92, 0.0, 0.92);
+    vec3 ink = clamp(col * 0.48, 0.0, 0.82);
+    gl_FragColor = vec4(mix(vec3(1.0), ink, coverage), 1.0);
+  } else if (uTransparent) {
+    float alpha = length(col);
+    alpha = smoothstep(0.0, 0.3, alpha);
+    alpha = min(alpha, 1.0);
+    gl_FragColor = vec4(col, alpha);
+  } else {
+    gl_FragColor = vec4(col, 1.0);
+  }
 }
 `;
 
@@ -339,7 +387,7 @@ void main() {
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error("Shader compile error:", gl.getShaderInfoLog(shader));
+            console.error("Galaxy shader compile error:", gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
             return null;
         }
@@ -355,72 +403,83 @@ void main() {
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error("Program link error:", gl.getProgramInfoLog(program));
+        console.error("Galaxy program link error:", gl.getProgramInfoLog(program));
         return;
     }
     gl.useProgram(program);
 
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    const positions = new Float32Array([
         -1, -1,
-         3, -1,
-        -1,  3
-    ]), gl.STATIC_DRAW);
+         1, -1,
+        -1,  1,
+        -1,  1,
+         1, -1,
+         1,  1
+    ]);
+    const uvs = new Float32Array([
+        0, 0,
+        1, 0,
+        0, 1,
+        0, 1,
+        1, 0,
+        1, 1
+    ]);
 
+    const posBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
     const posLoc = gl.getAttribLocation(program, 'position');
     gl.enableVertexAttribArray(posLoc);
     gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
+    const uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.STATIC_DRAW);
+    const uvLoc = gl.getAttribLocation(program, 'uv');
+    gl.enableVertexAttribArray(uvLoc);
+    gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+
     const uLoc = {
-        iTime: gl.getUniformLocation(program, 'iTime'),
-        iResolution: gl.getUniformLocation(program, 'iResolution'),
+        uTime: gl.getUniformLocation(program, 'uTime'),
+        uResolution: gl.getUniformLocation(program, 'uResolution'),
+        uFocal: gl.getUniformLocation(program, 'uFocal'),
+        uRotation: gl.getUniformLocation(program, 'uRotation'),
+        uStarSpeed: gl.getUniformLocation(program, 'uStarSpeed'),
+        uDensity: gl.getUniformLocation(program, 'uDensity'),
+        uHueShift: gl.getUniformLocation(program, 'uHueShift'),
         uSpeed: gl.getUniformLocation(program, 'uSpeed'),
-        uAmplitude: gl.getUniformLocation(program, 'uAmplitude'),
-        uWaveScale: gl.getUniformLocation(program, 'uWaveScale'),
-        uWaveRatio: gl.getUniformLocation(program, 'uWaveRatio'),
-        uSwell: gl.getUniformLocation(program, 'uSwell'),
-        uTurbulence: gl.getUniformLocation(program, 'uTurbulence'),
-        uTilt: gl.getUniformLocation(program, 'uTilt'),
-        uZoom: gl.getUniformLocation(program, 'uZoom'),
-        uHeight: gl.getUniformLocation(program, 'uHeight'),
-        uFogDepth: gl.getUniformLocation(program, 'uFogDepth'),
-        uSteps: gl.getUniformLocation(program, 'uSteps'),
-        uBrightness: gl.getUniformLocation(program, 'uBrightness'),
-        uOpacity: gl.getUniformLocation(program, 'uOpacity'),
-        uGrain: gl.getUniformLocation(program, 'uGrain'),
-        uGrainIntensity: gl.getUniformLocation(program, 'uGrainIntensity'),
         uMouse: gl.getUniformLocation(program, 'uMouse'),
-        uParallax: gl.getUniformLocation(program, 'uParallax'),
-        uEnableMouse: gl.getUniformLocation(program, 'uEnableMouse'),
-        uHorizonColor: gl.getUniformLocation(program, 'uHorizonColor'),
-        uWaveColor: gl.getUniformLocation(program, 'uWaveColor'),
-        uCrestColor: gl.getUniformLocation(program, 'uCrestColor')
+        uGlowIntensity: gl.getUniformLocation(program, 'uGlowIntensity'),
+        uSaturation: gl.getUniformLocation(program, 'uSaturation'),
+        uMouseRepulsion: gl.getUniformLocation(program, 'uMouseRepulsion'),
+        uTwinkleIntensity: gl.getUniformLocation(program, 'uTwinkleIntensity'),
+        uRotationSpeed: gl.getUniformLocation(program, 'uRotationSpeed'),
+        uRepulsionStrength: gl.getUniformLocation(program, 'uRepulsionStrength'),
+        uMouseActiveFactor: gl.getUniformLocation(program, 'uMouseActiveFactor'),
+        uAutoCenterRepulsion: gl.getUniformLocation(program, 'uAutoCenterRepulsion'),
+        uTransparent: gl.getUniformLocation(program, 'uTransparent'),
+        uLightMode: gl.getUniformLocation(program, 'uLightMode')
     };
 
+    gl.uniform2f(uLoc.uFocal, focal[0], focal[1]);
+    gl.uniform2f(uLoc.uRotation, rotation[0], rotation[1]);
+    gl.uniform1f(uLoc.uDensity, density);
+    gl.uniform1f(uLoc.uHueShift, hueShift);
     gl.uniform1f(uLoc.uSpeed, speed);
-    gl.uniform1f(uLoc.uAmplitude, amplitude);
-    gl.uniform1f(uLoc.uWaveScale, waveScale);
-    gl.uniform1f(uLoc.uWaveRatio, waveRatio);
-    gl.uniform1f(uLoc.uSwell, swell);
-    gl.uniform1f(uLoc.uTurbulence, turbulence);
-    gl.uniform1f(uLoc.uTilt, tilt);
-    gl.uniform1f(uLoc.uZoom, zoom);
-    gl.uniform1f(uLoc.uHeight, height);
-    gl.uniform1f(uLoc.uFogDepth, fogDepth);
-    gl.uniform1f(uLoc.uSteps, detailToSteps(detail));
-    gl.uniform1f(uLoc.uBrightness, brightness);
-    gl.uniform1f(uLoc.uOpacity, opacity);
-    gl.uniform1f(uLoc.uGrain, grain ? 1.0 : 0.0);
-    gl.uniform1f(uLoc.uGrainIntensity, grainIntensity);
-    gl.uniform1f(uLoc.uParallax, parallaxStrength);
-    gl.uniform1i(uLoc.uEnableMouse, mouseInteraction ? 1 : 0);
-    gl.uniform3fv(uLoc.uHorizonColor, hexToRgb(horizonColor));
-    gl.uniform3fv(uLoc.uWaveColor, hexToRgb(waveColor));
-    gl.uniform3fv(uLoc.uCrestColor, hexToRgb(crestColor));
+    gl.uniform1f(uLoc.uGlowIntensity, glowIntensity);
+    gl.uniform1f(uLoc.uSaturation, saturation);
+    gl.uniform1i(uLoc.uMouseRepulsion, mouseRepulsion ? 1 : 0);
+    gl.uniform1f(uLoc.uTwinkleIntensity, twinkleIntensity);
+    gl.uniform1f(uLoc.uRotationSpeed, rotationSpeed);
+    gl.uniform1f(uLoc.uRepulsionStrength, repulsionStrength);
+    gl.uniform1f(uLoc.uAutoCenterRepulsion, autoCenterRepulsion);
+    gl.uniform1i(uLoc.uTransparent, transparent ? 1 : 0);
+    gl.uniform1f(uLoc.uLightMode, lightMode ? 1.0 : 0.0);
 
-    let currentMouse = [0.5, 0.5];
-    let targetMouse = [0.5, 0.5];
+    const targetMousePos = { x: 0.5, y: 0.5 };
+    const smoothMousePos = { x: 0.5, y: 0.5 };
+    let targetMouseActive = 0.0;
+    let smoothMouseActive = 0.0;
 
     function resize() {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -430,7 +489,7 @@ void main() {
         canvas.width = Math.floor(w * dpr);
         canvas.height = Math.floor(h * dpr);
         gl.viewport(0, 0, canvas.width, canvas.height);
-        gl.uniform2f(uLoc.iResolution, canvas.width, canvas.height);
+        gl.uniform3f(uLoc.uResolution, canvas.width, canvas.height, canvas.width / canvas.height);
     }
 
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
@@ -438,31 +497,43 @@ void main() {
     window.addEventListener('resize', resize);
     resize();
 
-    window.addEventListener('pointermove', function (e) {
+    function handleMouseMove(e) {
         const rect = canvas.getBoundingClientRect();
-        targetMouse[0] = (e.clientX - rect.left) / rect.width;
-        targetMouse[1] = 1.0 - (e.clientY - rect.top) / rect.height;
-    }, { passive: true });
+        targetMousePos.x = (e.clientX - rect.left) / rect.width;
+        targetMousePos.y = 1.0 - (e.clientY - rect.top) / rect.height;
+        targetMouseActive = 1.0;
+    }
 
-    window.addEventListener('pointerleave', function () {
-        targetMouse[0] = 0.5;
-        targetMouse[1] = 0.5;
-    }, { passive: true });
+    function handleMouseLeave() {
+        targetMouseActive = 0.0;
+    }
+
+    if (mouseInteraction) {
+        window.addEventListener('mousemove', handleMouseMove, { passive: true });
+        window.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+    }
 
     let isVisible = true;
     let isPageVisible = !document.hidden;
     let raf = 0;
     const t0 = performance.now();
 
-    function loop(t) {
-        gl.uniform1f(uLoc.iTime, (t - t0) * 0.001);
-        const tx = mouseInteraction ? targetMouse[0] : 0.5;
-        const ty = mouseInteraction ? targetMouse[1] : 0.5;
-        currentMouse[0] += 0.05 * (tx - currentMouse[0]);
-        currentMouse[1] += 0.05 * (ty - currentMouse[1]);
-        gl.uniform2f(uLoc.uMouse, currentMouse[0], currentMouse[1]);
+    function loop(now) {
+        const t = now - t0;
+        if (!disableAnimation) {
+            gl.uniform1f(uLoc.uTime, t * 0.001);
+            gl.uniform1f(uLoc.uStarSpeed, (t * 0.001 * starSpeed) / 10.0);
+        }
 
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        const lerpFactor = 0.05;
+        smoothMousePos.x += (targetMousePos.x - smoothMousePos.x) * lerpFactor;
+        smoothMousePos.y += (targetMousePos.y - smoothMousePos.y) * lerpFactor;
+        smoothMouseActive += (targetMouseActive - smoothMouseActive) * lerpFactor;
+
+        gl.uniform2f(uLoc.uMouse, smoothMousePos.x, smoothMousePos.y);
+        gl.uniform1f(uLoc.uMouseActiveFactor, smoothMouseActive);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
         raf = requestAnimationFrame(loop);
     }
 
@@ -493,392 +564,4 @@ void main() {
     });
 
     tryStart();
-}
-
-function initGhostFibers(containerId, options) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    options = options || {};
-    const lineColor = options.lineColor || '#140E35';
-    const glowColor = options.glowColor || '#38ef7d';
-    const speed = options.speed !== undefined ? options.speed : 0.25;
-    const scale = options.scale !== undefined ? options.scale : 2.0;
-    const rotation = options.rotation !== undefined ? options.rotation : 0;
-    const rotationSpeed = options.rotationSpeed !== undefined ? options.rotationSpeed : 0.25;
-    const layers = options.layers !== undefined ? Math.min(Math.max(Math.round(options.layers), 1), 10) : 5;
-    const waveAmplitude = options.waveAmplitude !== undefined ? options.waveAmplitude : 0.018;
-    const waveFrequency = options.waveFrequency !== undefined ? options.waveFrequency : 3.0;
-    const waveSpeed = options.waveSpeed !== undefined ? options.waveSpeed : 0.15;
-    const layerSpeed = options.layerSpeed !== undefined ? options.layerSpeed : 0.08;
-    const twist = options.twist !== undefined ? options.twist : 0.12;
-    const twistFrequency = options.twistFrequency !== undefined ? options.twistFrequency : 5.0;
-    const twistSpeed = options.twistSpeed !== undefined ? options.twistSpeed : 1.2;
-    const lineFrequency = options.lineFrequency !== undefined ? options.lineFrequency : 5.0;
-    const lineSpacing = options.lineSpacing !== undefined ? options.lineSpacing : 2.0;
-    const lineSharpness = options.lineSharpness !== undefined ? options.lineSharpness : 14.0;
-    const glowFalloff = options.glowFalloff !== undefined ? options.glowFalloff : 8.0;
-    const glowIntensity = options.glowIntensity !== undefined ? options.glowIntensity : 2.2;
-    const brightness = options.brightness !== undefined ? options.brightness : 2.2;
-    const blueBoost = options.blueBoost !== undefined ? options.blueBoost : 1.25;
-    const vignette = options.vignette !== undefined ? options.vignette : 0.75;
-    const grain = options.grain !== undefined ? options.grain : 0.05;
-    const lightMode = options.lightMode ? 1.0 : 0.0;
-    const dpr = Math.min(Math.max(options.dpr || (window.devicePixelRatio || 1), 0.5), 2);
-    const targetFps = options.fps || 60;
-
-    let canvas = container.querySelector('canvas');
-    if (!canvas) {
-        canvas = document.createElement('canvas');
-        canvas.style.position = 'absolute';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.display = 'block';
-        canvas.setAttribute('aria-hidden', 'true');
-        container.appendChild(canvas);
-    }
-
-    const gl = canvas.getContext('webgl2', { alpha: false, antialias: false }) ||
-               canvas.getContext('webgl', { alpha: false, antialias: false }) ||
-               canvas.getContext('experimental-webgl');
-    if (!gl) {
-        console.warn("WebGL not supported for GhostFibers");
-        return;
-    }
-
-    const isWebGL2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
-
-    function hexToRgb(hex) {
-        const value = hex.trim().replace(/^#/, '');
-        const normalized = value.length === 3 ? value.replace(/./g, c => c + c) : value;
-        const match = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(normalized);
-        if (!match) return [0.08, 0.05, 0.2];
-        return [parseInt(match[1], 16) / 255, parseInt(match[2], 16) / 255, parseInt(match[3], 16) / 255];
-    }
-
-    const vsSource = isWebGL2 ? `#version 300 es
-in vec2 position;
-void main() {
-    gl_Position = vec4(position, 0.0, 1.0);
-}
-` : `
-attribute vec2 position;
-void main() {
-    gl_Position = vec4(position, 0.0, 1.0);
-}
-`;
-
-    const fsSource = (isWebGL2 ? `#version 300 es\nprecision highp float;\n` : `precision highp float;\n#define fragColor gl_FragColor\n`) + `
-uniform vec2 uResolution;
-uniform float uTime;
-uniform float uSpeed;
-uniform float uScale;
-uniform float uRotation;
-uniform float uLayers;
-uniform float uWaveAmplitude;
-uniform float uWaveFrequency;
-uniform float uWaveSpeed;
-uniform float uLayerSpeed;
-uniform float uTwist;
-uniform float uTwistFrequency;
-uniform float uTwistSpeed;
-uniform float uLineFrequency;
-uniform float uLineSpacing;
-uniform float uLineSharpness;
-uniform float uGlowFalloff;
-uniform float uGlowIntensity;
-uniform float uBrightness;
-uniform float uBlueBoost;
-uniform float uVignette;
-uniform float uGrain;
-uniform float uRotationSpeed;
-uniform float uLightMode;
-uniform vec3 uLineColor;
-uniform vec3 uGlowColor;
-
-` + (isWebGL2 ? `out vec4 fragColor;\n` : ``) + `
-#define MAX_LAYERS 10
-
-mat2 rotate2d(float angle) {
-  float sine = sin(angle);
-  float cosine = cos(angle);
-  return mat2(cosine, -sine, sine, cosine);
-}
-
-float grainHash(vec2 point) {
-  point = floor(point);
-  float hash = 52.9829189 * fract(dot(point, vec2(0.065, 0.005)));
-  return fract(hash);
-}
-
-float layeredGrain(vec2 fragmentPixel) {
-  vec2 point = mod(fragmentPixel + vec2(uTime * 30.0, -uTime * 21.0), 1024.0);
-  vec2 rotated = mat2(0.8, -0.5, 0.5, 0.8) * point;
-  float grain = 0.0;
-  grain += 0.40 * grainHash(rotated);
-  grain += 0.25 * grainHash(rotated * 2.0 + 17.0);
-  grain += 0.20 * grainHash(rotated * 4.0 + 47.0);
-  grain += 0.10 * grainHash(rotated * 8.0 + 113.0);
-  grain += 0.05 * grainHash(rotated * 16.0 + 191.0);
-  return grain;
-}
-
-void main() {
-  vec2 resolution = max(uResolution, vec2(1.0));
-  vec2 uv = (2.0 * gl_FragCoord.xy - resolution) / resolution.y;
-  float time = uTime * uSpeed;
-  vec3 backdrop = mix(vec3(0.047, 0.21, 0.145), vec3(1.0), step(0.5, uLightMode));
-  vec3 centerTone = max(uLineColor * 0.85567 - uGlowColor * 0.06186, vec3(0.0));
-  vec3 cloudTone = uLineColor * 0.19588 + uGlowColor * 0.2268;
-  vec2 p = uv;
-  p /= max(uScale, 0.05);
-  p = rotate2d(radians(uRotation) + time * uRotationSpeed) * p;
-  vec3 color = vec3(0.0);
-  float fiberField = 0.0;
-
-  for (int index = 0; index < MAX_LAYERS; index++) {
-    float fi = float(index) + 1.0;
-    if (fi > uLayers) break;
-
-    p += uWaveAmplitude * sin(p.yx * fi * uWaveFrequency + time * (uWaveSpeed + fi * uLayerSpeed));
-
-    float radius = length(p);
-    float polarAngle = atan(p.y, p.x);
-    polarAngle += sin(radius * uTwistFrequency - time * uTwistSpeed + fi) * uTwist;
-    p = vec2(cos(polarAngle), sin(polarAngle)) * radius;
-
-    float lines = abs(sin(p.x * (uLineFrequency + fi * uLineSpacing) + sin(p.y * 3.0 + time)));
-    lines = pow(max(0.0, 1.0 - lines), uLineSharpness);
-    fiberField += lines / fi;
-    color += uLineColor * lines / fi;
-
-    float glow = exp(-uGlowFalloff * abs(sin(p.x * 3.0 + time + fi)));
-    color += uGlowColor * glow * uGlowIntensity / (fi * 2.0);
-  }
-
-  float center = exp(-2.2 * dot(uv, uv));
-  color += centerTone * center;
-
-  float cloud = exp(-1.5 * length(uv + vec2(sin(time * 0.3) * 0.25, cos(time * 0.25) * 0.18)));
-  color += cloudTone * cloud;
-
-  float vignette = 1.0 - smoothstep(0.35, 1.45, length(uv));
-  color *= mix(1.0 - uVignette, 1.0, vignette);
-  color = 1.0 - exp(-color * uBrightness);
-  color.b *= uBlueBoost;
-
-  vec3 outputColor;
-  if (uLightMode > 0.5) {
-    float edgeFade = mix(1.0 - uVignette, 1.0, vignette);
-    float fibers = pow(smoothstep(0.12, 1.05, fiberField) * edgeFade, 1.5);
-    float atmosphere = (center * 0.025 + cloud * 0.015) * edgeFade;
-    vec3 fiberInk = mix(backdrop, uLineColor, 0.52);
-    vec3 airColor = mix(backdrop, uGlowColor, 0.16);
-
-    outputColor = mix(backdrop, airColor, atmosphere);
-    outputColor = mix(outputColor, fiberInk, fibers * 0.3);
-  } else {
-    outputColor = backdrop + color;
-  }
-
-  float noise = (layeredGrain(gl_FragCoord.xy) - 0.5) * uGrain;
-  outputColor = clamp(outputColor + noise, 0.0, 1.0);
-  fragColor = vec4(outputColor, 1.0);
-}
-`;
-
-    function createShader(gl, type, source) {
-        const shader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error('GhostFibers Shader compile error:', gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
-            return null;
-        }
-        return shader;
-    }
-
-    const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
-    if (!vs || !fs) return;
-
-    const program = gl.createProgram();
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('GhostFibers Program link error:', gl.getProgramInfoLog(program));
-        return;
-    }
-    gl.useProgram(program);
-
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        -1, -1,
-         1, -1,
-        -1,  1,
-        -1,  1,
-         1, -1,
-         1,  1
-    ]), gl.STATIC_DRAW);
-
-    const posLoc = gl.getAttribLocation(program, 'position');
-    gl.enableVertexAttribArray(posLoc);
-    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-
-    const uResolution = gl.getUniformLocation(program, 'uResolution');
-    const uTime = gl.getUniformLocation(program, 'uTime');
-    const uSpeed = gl.getUniformLocation(program, 'uSpeed');
-    const uScale = gl.getUniformLocation(program, 'uScale');
-    const uRotation = gl.getUniformLocation(program, 'uRotation');
-    const uRotationSpeed = gl.getUniformLocation(program, 'uRotationSpeed');
-    const uLayers = gl.getUniformLocation(program, 'uLayers');
-    const uWaveAmplitude = gl.getUniformLocation(program, 'uWaveAmplitude');
-    const uWaveFrequency = gl.getUniformLocation(program, 'uWaveFrequency');
-    const uWaveSpeed = gl.getUniformLocation(program, 'uWaveSpeed');
-    const uLayerSpeed = gl.getUniformLocation(program, 'uLayerSpeed');
-    const uTwist = gl.getUniformLocation(program, 'uTwist');
-    const uTwistFrequency = gl.getUniformLocation(program, 'uTwistFrequency');
-    const uTwistSpeed = gl.getUniformLocation(program, 'uTwistSpeed');
-    const uLineFrequency = gl.getUniformLocation(program, 'uLineFrequency');
-    const uLineSpacing = gl.getUniformLocation(program, 'uLineSpacing');
-    const uLineSharpness = gl.getUniformLocation(program, 'uLineSharpness');
-    const uGlowFalloff = gl.getUniformLocation(program, 'uGlowFalloff');
-    const uGlowIntensity = gl.getUniformLocation(program, 'uGlowIntensity');
-    const uBrightness = gl.getUniformLocation(program, 'uBrightness');
-    const uBlueBoost = gl.getUniformLocation(program, 'uBlueBoost');
-    const uVignette = gl.getUniformLocation(program, 'uVignette');
-    const uGrain = gl.getUniformLocation(program, 'uGrain');
-    const uLightModeLoc = gl.getUniformLocation(program, 'uLightMode');
-    const uLineColorLoc = gl.getUniformLocation(program, 'uLineColor');
-    const uGlowColorLoc = gl.getUniformLocation(program, 'uGlowColor');
-
-    gl.uniform1f(uSpeed, speed);
-    gl.uniform1f(uScale, scale);
-    gl.uniform1f(uRotation, rotation);
-    gl.uniform1f(uRotationSpeed, rotationSpeed);
-    gl.uniform1f(uLayers, layers);
-    gl.uniform1f(uWaveAmplitude, waveAmplitude);
-    gl.uniform1f(uWaveFrequency, waveFrequency);
-    gl.uniform1f(uWaveSpeed, waveSpeed);
-    gl.uniform1f(uLayerSpeed, layerSpeed);
-    gl.uniform1f(uTwist, twist);
-    gl.uniform1f(uTwistFrequency, twistFrequency);
-    gl.uniform1f(uTwistSpeed, twistSpeed);
-    gl.uniform1f(uLineFrequency, lineFrequency);
-    gl.uniform1f(uLineSpacing, lineSpacing);
-    gl.uniform1f(uLineSharpness, lineSharpness);
-    gl.uniform1f(uGlowFalloff, glowFalloff);
-    gl.uniform1f(uGlowIntensity, glowIntensity);
-    gl.uniform1f(uBrightness, brightness);
-    gl.uniform1f(uBlueBoost, blueBoost);
-    gl.uniform1f(uVignette, vignette);
-    gl.uniform1f(uGrain, grain);
-    gl.uniform1f(uLightModeLoc, lightMode);
-    gl.uniform3fv(uLineColorLoc, new Float32Array(hexToRgb(lineColor)));
-    gl.uniform3fv(uGlowColorLoc, new Float32Array(hexToRgb(glowColor)));
-
-    let frameId = 0;
-    let elapsed = 0;
-    let previousTime = performance.now();
-    let lastRenderTime = 0;
-    let isVisible = true;
-    let isPageVisible = !document.hidden;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    function setSize() {
-        const parent = container.parentElement || container;
-        const rect = container.getBoundingClientRect();
-        const w = Math.max(1, Math.floor((rect.width || container.clientWidth || parent.clientWidth || window.innerWidth) * dpr));
-        const h = Math.max(1, Math.floor((rect.height || container.clientHeight || parent.clientHeight || 450) * dpr));
-        if (canvas.width !== w || canvas.height !== h) {
-            canvas.width = w;
-            canvas.height = h;
-            gl.viewport(0, 0, w, h);
-            gl.uniform2f(uResolution, w, h);
-        }
-    }
-
-    function renderFrame() {
-        gl.useProgram(program);
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.enableVertexAttribArray(posLoc);
-        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
-
-    function canAnimate() {
-        return isVisible && isPageVisible && !reducedMotion.matches;
-    }
-
-    function loop(now) {
-        frameId = 0;
-        if (!canAnimate()) return;
-
-        setSize();
-
-        const delta = Math.min((now - previousTime) / 1000, 0.1);
-        previousTime = now;
-        elapsed += delta;
-
-        if (now - lastRenderTime >= 1000 / targetFps - 0.5) {
-            gl.useProgram(program);
-            gl.uniform1f(uTime, elapsed);
-            renderFrame();
-            lastRenderTime = now;
-        }
-
-        frameId = requestAnimationFrame(loop);
-    }
-
-    function start() {
-        if (!canAnimate() || frameId !== 0) return;
-        previousTime = performance.now();
-        frameId = requestAnimationFrame(loop);
-    }
-
-    function stop() {
-        if (frameId !== 0) cancelAnimationFrame(frameId);
-        frameId = 0;
-    }
-
-    if (typeof ResizeObserver !== 'undefined') {
-        const resizeObserver = new ResizeObserver(setSize);
-        resizeObserver.observe(container);
-        if (container.parentElement) resizeObserver.observe(container.parentElement);
-    }
-    window.addEventListener('resize', setSize);
-
-    if (typeof IntersectionObserver !== 'undefined') {
-        const intersectionObserver = new IntersectionObserver(
-            ([entry]) => {
-                isVisible = entry.isIntersecting;
-                if (canAnimate()) start();
-                else stop();
-            },
-            { threshold: 0 }
-        );
-        intersectionObserver.observe(container);
-    }
-
-    document.addEventListener('visibilitychange', () => {
-        isPageVisible = !document.hidden;
-        if (canAnimate()) start();
-        else stop();
-    });
-
-    reducedMotion.addEventListener('change', () => {
-        if (canAnimate()) start();
-        else {
-            stop();
-            renderFrame();
-        }
-    });
-
-    setSize();
-    start();
 }
