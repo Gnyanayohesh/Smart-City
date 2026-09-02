@@ -11,7 +11,7 @@ require_once 'includes/header.php';
 ?>
 
 <section class="hero">
-    <div id="ghostFibersBg" class="ghost-fibers-container"></div>
+    <div id="gradientWavesBg" class="gradient-waves-container"></div>
     <div class="container">
         <h1>Keep Our City Clean, Together</h1>
         <p>Spot an unclean public area? Report it in seconds &mdash; with a photo and location &mdash; and track how the municipal team resolves it.</p>

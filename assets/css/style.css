@@ -343,11 +343,11 @@ a:hover { text-decoration: underline; }
 .footer-inner { text-align: center; font-size: 0.85rem; opacity: 0.85; }
 .footer-sdg { color: var(--amber-500); font-weight: 600; margin-top: 6px; }
 
-/* ---------- Hero & GhostFibers ---------- */
+/* ---------- Hero & GradientWaves ---------- */
 .hero {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(circle at 50% 20%, #15573e 0%, #0c3525 100%);
+    background: #0e0828;
     color: var(--white);
     padding: 85px 0 75px;
     text-align: center;
@@ -356,7 +356,7 @@ a:hover { text-decoration: underline; }
     position: relative;
     z-index: 10;
 }
-.ghost-fibers-container {
+.gradient-waves-container {
     position: absolute;
     top: 0;
     left: 0;
@@ -365,24 +365,8 @@ a:hover { text-decoration: underline; }
     overflow: hidden;
     pointer-events: none;
     z-index: 1;
-    opacity: 0.9;
 }
-.ghost-fibers-container canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-}
-.soft-aurora-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.85;
-}
-.soft-aurora-container canvas {
+.gradient-waves-container canvas {
     width: 100% !important;
     height: 100% !important;
     display: block;
