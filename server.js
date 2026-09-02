@@ -305,6 +305,7 @@ body {
 </head>
 <body>
 <header class="site-header">
+    <div id="headerGalaxyBg" class="galaxy-container header-galaxy"></div>
     <div class="container header-inner">
         <div class="pill-nav-container">
             <nav class="pill-nav" aria-label="Primary">

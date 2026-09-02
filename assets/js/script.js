@@ -86,6 +86,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 3b. React Bits <Galaxy /> Integration (Top Header Box)
+    if (document.getElementById('headerGalaxyBg')) {
+        initGalaxy('headerGalaxyBg', {
+            focal: [0.5, 0.5],
+            rotation: [1.0, 0.0],
+            starSpeed: 0.5,
+            density: 1.5,
+            hueShift: 240,
+            disableAnimation: false,
+            speed: 1.0,
+            mouseInteraction: true,
+            glowIntensity: 0.6,
+            saturation: 0.85,
+            mouseRepulsion: true,
+            repulsionStrength: 2,
+            twinkleIntensity: 0.35,
+            rotationSpeed: 0.1,
+            autoCenterRepulsion: 0,
+            transparent: true,
+            lightMode: false
+        });
+    }
+
     // 4. React Bits <TiltedCard /> Integration
     initTiltedCards();
 
