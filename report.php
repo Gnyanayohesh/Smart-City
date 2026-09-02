@@ -34,11 +34,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $destPath = $destDir . $newName;
 
             if (move_uploaded_file($_FILES['photo']['tmp_name'], $destPath)) {
-                $stmt = $conn->prepare("INSERT INTO reports (reporter_name, reporter_contact, description, location_area, latitude, longitude, photo_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')");
+                $assignment = resolveCleanerForAreaPhp($location, $conn);
+                $assignedCleanerId = $assignment['cleaner_id'];
+                $assignedCleanerName = $assignment['name'];
+                $assignmentType = $assignment['type'];
+
+                $stmt = $conn->prepare("INSERT INTO reports (reporter_name, reporter_contact, description, location_area, latitude, longitude, photo_path, status, assigned_cleaner_id, assigned_cleaner_name, assignment_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?)");
                 $photoPathForDb = 'uploads/' . $newName;
-                $stmt->bind_param("ssssdds", $name, $contact, $description, $location, $lat, $lng, $photoPathForDb);
+                $stmt->bind_param("ssssddssis", $name, $contact, $description, $location, $lat, $lng, $photoPathForDb, $assignedCleanerId, $assignedCleanerName, $assignmentType);
                 if ($stmt->execute()) {
-                    $success = "Thank you! Your report has been submitted and is now Pending review.";
+                    if ($assignmentType === 'Primary') {
+                        $success = "Thank you! Your report has been submitted and automatically assigned to " . htmlspecialchars($assignedCleanerName) . " (Primary Area Cleaner).";
+                    } elseif ($assignmentType === 'Replacement') {
+                        $success = "Thank you! Your report has been submitted and assigned to " . htmlspecialchars($assignedCleanerName) . " (Temporary Replacement Cleaner, as primary cleaner is on leave).";
+                    } else {
+                        $success = "Thank you! Your report has been submitted and is now Pending review.";
+                    }
                     $_POST = [];
                 } else {
                     $error = "Something went wrong while saving your report. Please try again.";
@@ -48,6 +59,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Failed to upload the photo. Please try again.";
             }
         }
+    }
+}
+
+function resolveCleanerForAreaPhp($location, $conn) {
+    $cleanersRes = $conn->query("SELECT * FROM cleaners");
+    $cleaners = $cleanersRes ? $cleanersRes->fetch_all(MYSQLI_ASSOC) : [];
+    if (empty($cleaners)) {
+        return ['cleaner_id' => null, 'name' => 'Unassigned', 'type' => 'Unassigned'];
+    }
+
+    $locLower = strtolower($location);
+    $primaryCleaner = null;
+
+    foreach ($cleaners as $c) {
+        $areaLower = strtolower($c['assigned_area']);
+        if ($areaLower !== '' && (str_contains($locLower, $areaLower) || str_contains($areaLower, $locLower))) {
+            $primaryCleaner = $c;
+            break;
+        }
+    }
+
+    if (!$primaryCleaner) {
+        $words = preg_split('/[\s,.-]+/', $locLower);
+        foreach ($cleaners as $c) {
+            $areaLower = strtolower($c['assigned_area']);
+            foreach ($words as $w) {
+                if (strlen($w) >= 3 && str_contains($areaLower, $w)) {
+                    $primaryCleaner = $c;
+                    break 2;
+                }
+            }
+        }
+    }
+
+    if (!$primaryCleaner) {
+        return ['cleaner_id' => null, 'name' => 'Unassigned', 'type' => 'Unassigned'];
+    }
+
+    // Check leave status
+    if (!$primaryCleaner['is_on_leave']) {
+        return [
+            'cleaner_id' => (int)$primaryCleaner['cleaner_id'],
+            'name' => $primaryCleaner['name'],
+            'type' => 'Primary'
+        ];
+    } else {
+        // Cleaner is on leave -> Assign to temporary replacement cleaner
+        $repId = (int)$primaryCleaner['replacement_cleaner_id'];
+        if ($repId) {
+            foreach ($cleaners as $c) {
+                if ((int)$c['cleaner_id'] === $repId && !$c['is_on_leave']) {
+                    return [
+                        'cleaner_id' => (int)$c['cleaner_id'],
+                        'name' => $c['name'],
+                        'type' => 'Replacement'
+                    ];
+                }
+            }
+        }
+
+        // Fallback: any other available cleaner
+        foreach ($cleaners as $c) {
+            if ((int)$c['cleaner_id'] !== (int)$primaryCleaner['cleaner_id'] && !$c['is_on_leave']) {
+                return [
+                    'cleaner_id' => (int)$c['cleaner_id'],
+                    'name' => $c['name'],
+                    'type' => 'Replacement'
+                ];
+            }
+        }
+
+        return ['cleaner_id' => null, 'name' => 'Unassigned (Cleaner On Leave)', 'type' => 'Unassigned'];
     }
 }
 

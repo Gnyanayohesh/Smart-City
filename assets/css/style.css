@@ -773,6 +773,72 @@ table.admin-table .desc-cell { max-width: 240px; }
     .admin-sidebar { width: 100%; }
 }
 
+/* ---------- Cleaner Management Module Styles ---------- */
+.cleaner-badge-available {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #e6f9f0;
+    color: #0f764a;
+    border: 1px solid #a3e6c5;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.cleaner-badge-leave {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff8e6;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.assignment-badge-primary {
+    background: #e6f9f0;
+    color: #0f764a;
+    border: 1px solid #a3e6c5;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-block;
+}
+.assignment-badge-replacement {
+    background: #fff8e6;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-block;
+}
+.cleaner-manage-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+    border: 1px solid var(--gray-200);
+}
+.leave-alert-banner {
+    background: #fff8e6;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 14px 20px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+}
+
 /* ---------- React Bits <ClickSpark /> ---------- */
 .click-spark-canvas {
     position: fixed;

@@ -54,6 +54,44 @@ const defaultData = {
             full_name: "Municipal Administrator"
         }
     ],
+    cleaners: [
+        {
+            cleaner_id: 1,
+            username: "cleaner",
+            name: "Ramesh Kumar",
+            contact: "9876500001",
+            assigned_area: "Anna Nagar",
+            is_on_leave: false,
+            replacement_cleaner_id: null
+        },
+        {
+            cleaner_id: 2,
+            username: "suresh",
+            name: "Suresh Babu",
+            contact: "9876500002",
+            assigned_area: "Gandhi Park",
+            is_on_leave: false,
+            replacement_cleaner_id: null
+        },
+        {
+            cleaner_id: 3,
+            username: "murugan",
+            name: "Murugan S",
+            contact: "9876500003",
+            assigned_area: "Cantonment",
+            is_on_leave: true,
+            replacement_cleaner_id: 1
+        },
+        {
+            cleaner_id: 4,
+            username: "karthik",
+            name: "Karthik V",
+            contact: "9876500004",
+            assigned_area: "Thillai Nagar",
+            is_on_leave: false,
+            replacement_cleaner_id: null
+        }
+    ],
     reports: [
         {
             report_id: 1,
@@ -65,6 +103,9 @@ const defaultData = {
             longitude: 78.6869,
             photo_path: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
             status: "Pending",
+            assigned_cleaner_id: 1,
+            assigned_cleaner_name: "Ramesh Kumar",
+            assignment_type: "Primary",
             submitted_at: new Date(Date.now() - 86400000 * 2).toISOString()
         },
         {
@@ -77,6 +118,9 @@ const defaultData = {
             longitude: 78.7047,
             photo_path: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&auto=format&fit=crop&q=60",
             status: "In Progress",
+            assigned_cleaner_id: 2,
+            assigned_cleaner_name: "Suresh Babu",
+            assignment_type: "Primary",
             submitted_at: new Date(Date.now() - 86400000).toISOString()
         },
         {
@@ -89,6 +133,9 @@ const defaultData = {
             longitude: 78.6892,
             photo_path: "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=500&auto=format&fit=crop&q=60",
             status: "Cleaned",
+            assigned_cleaner_id: 1,
+            assigned_cleaner_name: "Ramesh Kumar",
+            assignment_type: "Replacement",
             submitted_at: new Date(Date.now() - 86400000 * 3).toISOString()
         }
     ]
@@ -112,6 +159,9 @@ function loadData() {
             if (!data.users || data.users.length === 0) {
                 data.users = defaultData.users;
             }
+            if (!data.cleaners || data.cleaners.length === 0) {
+                data.cleaners = defaultData.cleaners;
+            }
             return data;
         }
     } catch (e) {
@@ -126,6 +176,78 @@ function saveData(data) {
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
     } catch (e) {
         console.error("Error writing data file:", e);
+    }
+}
+
+// Mission Assignment Logic:
+// Reported Location -> Identify Area -> Check Assigned Cleaner -> Check Leave Status
+// If available: Assign Mission to Assigned Cleaner
+// If on leave: Assign Mission to Temporary Replacement Cleaner
+function resolveCleanerForArea(locationArea, data) {
+    if (!locationArea || !data.cleaners || data.cleaners.length === 0) {
+        return { cleaner_id: null, cleaner_name: "Unassigned", assignment_type: "Unassigned" };
+    }
+
+    const locLower = locationArea.toLowerCase();
+
+    // 1. Identify primary cleaner whose permanently assigned area matches the reported location
+    let primaryCleaner = data.cleaners.find(c => {
+        const areaLower = (c.assigned_area || '').toLowerCase();
+        return areaLower && (locLower.includes(areaLower) || areaLower.includes(locLower));
+    });
+
+    // Substring / keyword token fallback (e.g. "Anna Nagar Bus Stop" matches "Anna Nagar")
+    if (!primaryCleaner) {
+        const tokens = locLower.split(/[\s,.-]+/).filter(t => t.length >= 3);
+        primaryCleaner = data.cleaners.find(c => {
+            const areaLower = (c.assigned_area || '').toLowerCase();
+            return tokens.some(token => areaLower.includes(token));
+        });
+    }
+
+    // If no cleaner is assigned to this area
+    if (!primaryCleaner) {
+        return { cleaner_id: null, cleaner_name: "Unassigned", assignment_type: "Unassigned" };
+    }
+
+    // 2. Check Leave Status
+    if (!primaryCleaner.is_on_leave) {
+        // Cleaner is available -> Assign mission to Primary Cleaner
+        return {
+            cleaner_id: primaryCleaner.cleaner_id,
+            cleaner_name: primaryCleaner.name,
+            assignment_type: "Primary"
+        };
+    } else {
+        // Cleaner is on leave -> Assign mission to Temporary Replacement Cleaner
+        let replacement = null;
+        if (primaryCleaner.replacement_cleaner_id) {
+            replacement = data.cleaners.find(c => c.cleaner_id === primaryCleaner.replacement_cleaner_id);
+        }
+        // If assigned replacement is valid and not on leave:
+        if (replacement && !replacement.is_on_leave) {
+            return {
+                cleaner_id: replacement.cleaner_id,
+                cleaner_name: replacement.name,
+                assignment_type: "Replacement"
+            };
+        }
+
+        // Fallback: choose any available cleaner who is not on leave
+        const availableCleaner = data.cleaners.find(c => !c.is_on_leave && c.cleaner_id !== primaryCleaner.cleaner_id);
+        if (availableCleaner) {
+            return {
+                cleaner_id: availableCleaner.cleaner_id,
+                cleaner_name: availableCleaner.name,
+                assignment_type: "Replacement"
+            };
+        }
+
+        return {
+            cleaner_id: null,
+            cleaner_name: "Unassigned (Cleaner On Leave)",
+            assignment_type: "Unassigned"
+        };
     }
 }
 
@@ -436,6 +558,7 @@ const server = http.createServer((req, res) => {
                 if (!name || !description || !location) {
                     error = "Please fill in your name, description, and location.";
                 } else {
+                    const assignment = resolveCleanerForArea(location, data);
                     const newReport = {
                         report_id: data.reports.length > 0 ? Math.max(...data.reports.map(r => r.report_id)) + 1 : 1,
                         reporter_name: name,
@@ -446,11 +569,21 @@ const server = http.createServer((req, res) => {
                         longitude: lng,
                         photo_path: photo,
                         status: "Pending",
+                        assigned_cleaner_id: assignment.cleaner_id,
+                        assigned_cleaner_name: assignment.cleaner_name,
+                        assignment_type: assignment.assignment_type,
                         submitted_at: new Date().toISOString()
                     };
                     data.reports.unshift(newReport);
                     saveData(data);
-                    success = "Thank you! Your report has been submitted and is now Pending review.";
+                    
+                    if (assignment.assignment_type === 'Primary') {
+                        success = `Thank you! Report submitted and automatically assigned to ${assignment.cleaner_name} (Primary Cleaner for this area).`;
+                    } else if (assignment.assignment_type === 'Replacement') {
+                        success = `Thank you! Report submitted and assigned to ${assignment.cleaner_name} (Temporary Replacement Cleaner, as primary cleaner is on leave).`;
+                    } else {
+                        success = "Thank you! Your report has been submitted and is now Pending review.";
+                    }
                 }
 
                 const html = renderReportPage(error, success, currentUser);
@@ -614,23 +747,39 @@ const server = http.createServer((req, res) => {
         return res.end();
     }
 
-    // 6. CLEANER PORTAL (Sanitation Staff: View reports and update status)
+    // 6. CLEANER PORTAL (Sanitation Staff: View assigned reports and update status)
     if (pathname === '/cleaner/dashboard' || pathname === '/cleaner' || pathname === '/cleaner.php') {
         if (!currentUser || (currentUser.role !== 'cleaner' && currentUser.role !== 'admin')) {
             res.writeHead(302, { 'Location': '/login' });
             return res.end();
         }
 
+        // Match the logged-in cleaner
+        const myCleaner = (data.cleaners || []).find(c => 
+            (c.username && currentUser.username && c.username.toLowerCase() === currentUser.username.toLowerCase()) ||
+            (c.name && currentUser.full_name && currentUser.full_name.toLowerCase().includes(c.name.toLowerCase()))
+        ) || (data.cleaners && data.cleaners[0]);
+
+        // Find areas this cleaner is temporarily covering as a replacement
+        const coveringFor = (data.cleaners || []).filter(c => c.is_on_leave && c.replacement_cleaner_id === (myCleaner ? myCleaner.cleaner_id : -1));
+
         const statusFilter = parsedUrl.query.status || '';
-        let filtered = data.reports;
+        const viewScope = parsedUrl.query.scope || 'assigned'; // 'assigned' or 'all'
+
+        let cleanerReports = data.reports;
+        if (currentUser.role === 'cleaner' && viewScope === 'assigned' && myCleaner) {
+            cleanerReports = cleanerReports.filter(r => r.assigned_cleaner_id === myCleaner.cleaner_id);
+        }
+
+        let filtered = cleanerReports;
         if (statusFilter && ['Pending', 'In Progress', 'Cleaned'].includes(statusFilter)) {
             filtered = filtered.filter(r => r.status === statusFilter);
         }
 
-        const total = data.reports.length;
-        const pending = data.reports.filter(r => r.status === 'Pending').length;
-        const progress = data.reports.filter(r => r.status === 'In Progress').length;
-        const cleaned = data.reports.filter(r => r.status === 'Cleaned').length;
+        const total = cleanerReports.length;
+        const pending = cleanerReports.filter(r => r.status === 'Pending').length;
+        const progress = cleanerReports.filter(r => r.status === 'In Progress').length;
+        const cleaned = cleanerReports.filter(r => r.status === 'Cleaned').length;
 
         let taskCards = '';
         if (filtered.length === 0) {
@@ -643,6 +792,7 @@ const server = http.createServer((req, res) => {
             taskCards = `<div class="report-grid">` + filtered.map(row => {
                 const badgeClass = 'badge-' + row.status.replace(/\s+/g, '-');
                 const dateStr = new Date(row.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                const isReplacement = row.assignment_type === 'Replacement';
                 return `
                 <div class="report-card" style="border: 2px solid ${row.status === 'Pending' ? 'var(--amber-500)' : row.status === 'In Progress' ? 'var(--blue-500)' : 'var(--green-500)'}">
                     <img src="${row.photo_path}" alt="Spot photo"
@@ -652,6 +802,15 @@ const server = http.createServer((req, res) => {
                             <div class="location">📍 ${escapeHtml(row.location_area)}</div>
                             <span class="badge ${badgeClass}">${escapeHtml(row.status)}</span>
                         </div>
+
+                        <div style="margin-bottom:8px;">
+                            ${isReplacement ? `
+                                <span class="assignment-badge-replacement">🔄 Temporary Replacement Mission</span>
+                            ` : `
+                                <span class="assignment-badge-primary">📍 Primary Area Mission</span>
+                            `}
+                        </div>
+
                         <div class="desc">${escapeHtml(row.description)}</div>
                         <div class="meta">Reported by ${escapeHtml(row.reporter_name)} &bull; ${dateStr}</div>
                         
@@ -691,12 +850,40 @@ const server = http.createServer((req, res) => {
         <div class="cleaner-header-banner">
             <div>
                 <h2>🧹 Sanitation Worker Portal</h2>
-                <p>Welcome, <strong>${escapeHtml(currentUser.full_name || 'Sanitation Staff')}</strong>! View civic garbage reports and update progress after cleaning.</p>
+                <p>Welcome, <strong>${escapeHtml(myCleaner ? myCleaner.name : (currentUser.full_name || 'Sanitation Staff'))}</strong>!</p>
+                <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <span style="background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:9999px; font-size:0.85rem; font-weight:700;">
+                        📍 Assigned Ward: ${escapeHtml(myCleaner ? myCleaner.assigned_area : 'Trichy City')}
+                    </span>
+                    ${myCleaner && myCleaner.is_on_leave ? `
+                        <span class="cleaner-badge-leave">🏖️ You are On Leave</span>
+                    ` : `
+                        <span class="cleaner-badge-available">● Available on Duty</span>
+                    `}
+                </div>
+                ${coveringFor.length > 0 ? `
+                    <div style="margin-top:10px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); padding:8px 14px; border-radius:10px; font-size:0.85rem;">
+                        🔄 <strong>Temporary Replacement Notice:</strong> You are currently covering 
+                        <strong>${coveringFor.map(c => escapeHtml(c.assigned_area) + ' (' + escapeHtml(c.name) + ' is on leave)').join(', ')}</strong>.
+                    </div>
+                ` : ''}
             </div>
-            <div style="background:rgba(255,255,255,0.15); padding:10px 18px; border-radius:10px; font-weight:700;">
+            <div style="background:rgba(255,255,255,0.15); padding:10px 18px; border-radius:10px; font-weight:700; text-align:right;">
                 Role: Sanitation Cleaner
             </div>
         </div>
+
+        ${myCleaner && myCleaner.is_on_leave ? `
+            <div class="leave-alert-banner">
+                <span style="font-size:1.8rem;">🏖️</span>
+                <div>
+                    <strong style="font-size:1.05rem;">You are currently marked On Leave</strong>
+                    <div style="font-size:0.9rem; opacity:0.95; margin-top:3px;">
+                        New missions reported in your permanently assigned area (<strong>${escapeHtml(myCleaner.assigned_area)}</strong>) are temporarily redirected to your replacement cleaner. Enjoy your leave!
+                    </div>
+                </div>
+            </div>
+        ` : ''}
 
         <div class="stats-bar" style="margin-top:0; margin-bottom:30px;">
             <div class="stat"><div class="num">${total}</div><div class="label">Total Tasks</div></div>
@@ -708,12 +895,17 @@ const server = http.createServer((req, res) => {
         <div class="filter-bar">
             <div>
                 <strong>Filter Tasks:</strong>
-                <a href="/cleaner/dashboard" class="btn ${!statusFilter ? 'btn-secondary' : 'btn-outline'}" style="margin-left:8px; padding:6px 12px; font-size:0.85rem; color:${!statusFilter ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">All (${total})</a>
-                <a href="/cleaner/dashboard?status=Pending" class="btn ${statusFilter === 'Pending' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'Pending' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">Pending (${pending})</a>
-                <a href="/cleaner/dashboard?status=In+Progress" class="btn ${statusFilter === 'In Progress' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'In Progress' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">In Progress (${progress})</a>
-                <a href="/cleaner/dashboard?status=Cleaned" class="btn ${statusFilter === 'Cleaned' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'Cleaned' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">Cleaned (${cleaned})</a>
+                <a href="/cleaner/dashboard?scope=${escapeHtml(viewScope)}" class="btn ${!statusFilter ? 'btn-secondary' : 'btn-outline'}" style="margin-left:8px; padding:6px 12px; font-size:0.85rem; color:${!statusFilter ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">All (${total})</a>
+                <a href="/cleaner/dashboard?scope=${escapeHtml(viewScope)}&status=Pending" class="btn ${statusFilter === 'Pending' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'Pending' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">Pending (${pending})</a>
+                <a href="/cleaner/dashboard?scope=${escapeHtml(viewScope)}&status=In+Progress" class="btn ${statusFilter === 'In Progress' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'In Progress' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">In Progress (${progress})</a>
+                <a href="/cleaner/dashboard?scope=${escapeHtml(viewScope)}&status=Cleaned" class="btn ${statusFilter === 'Cleaned' ? 'btn-secondary' : 'btn-outline'}" style="margin-left:4px; padding:6px 12px; font-size:0.85rem; color:${statusFilter === 'Cleaned' ? '#fff' : 'var(--green-900)'}; border-color:var(--green-900);">Cleaned (${cleaned})</a>
             </div>
-            <a href="/dashboard" class="btn btn-outline btn-small" style="color:var(--green-900); border-color:var(--green-900);">View Public Feed</a>
+            <div style="display:flex; gap:8px;">
+                <a href="/cleaner/dashboard?scope=${viewScope === 'assigned' ? 'all' : 'assigned'}" class="btn btn-outline btn-small" style="color:var(--green-900); border-color:var(--green-900);">
+                    ${viewScope === 'assigned' ? '🌐 View All City Reports' : '🎯 View My Assigned Only'}
+                </a>
+                <a href="/dashboard" class="btn btn-outline btn-small" style="color:var(--green-900); border-color:var(--green-900);">Public Feed</a>
+            </div>
         </div>
 
         ${taskCards}
@@ -771,17 +963,27 @@ const server = http.createServer((req, res) => {
 
         let tableRows = '';
         if (filtered.length === 0) {
-            tableRows = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--gray-500);">No reports in this category.</td></tr>`;
+            tableRows = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--gray-500);">No reports in this category.</td></tr>`;
         } else {
             tableRows = filtered.map(row => {
                 const badgeClass = 'badge-' + row.status.replace(/\s+/g, '-');
                 const dateStr = new Date(row.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                 const descSnippet = row.description.length > 90 ? row.description.substring(0, 87) + '...' : row.description;
+                const isReplacement = row.assignment_type === 'Replacement';
                 return `
                 <tr>
                     <td><img class="thumb" src="${row.photo_path}" alt="report photo"
                              onerror="this.src='https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=100&auto=format&fit=crop&q=60'"></td>
                     <td><strong>${escapeHtml(row.location_area)}</strong></td>
+                    <td>
+                        <strong>${escapeHtml(row.assigned_cleaner_name || 'Unassigned')}</strong><br>
+                        ${row.assignment_type === 'Primary' 
+                            ? `<span class="assignment-badge-primary">Primary Cleaner</span>` 
+                            : isReplacement 
+                            ? `<span class="assignment-badge-replacement">Temporary Replacement</span>` 
+                            : `<span style="font-size:11px; color:#9ca3af;">Unassigned</span>`
+                        }
+                    </td>
                     <td class="desc-cell">${escapeHtml(descSnippet)}</td>
                     <td>${escapeHtml(row.reporter_name)}<br><small style="color:var(--gray-500);">${escapeHtml(row.reporter_contact || '')}</small></td>
                     <td>${dateStr}</td>
@@ -815,14 +1017,26 @@ const server = http.createServer((req, res) => {
             <a href="/admin/dashboard?status=Pending" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">Pending</a>
             <a href="/admin/dashboard?status=In+Progress" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">In Progress</a>
             <a href="/admin/dashboard?status=Cleaned" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">Cleaned</a>
-            <a href="/cleaner/dashboard" style="color:var(--amber-500); font-weight:700; display:block; margin-top:16px;">&rarr; Open Cleaner View</a>
+            
+            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.15); margin:16px 0;">
+            <a href="/admin/cleaners" style="color:var(--amber-500); font-weight:700; display:block; margin-bottom:10px;">
+                🧹 Cleaner &amp; Area Management
+            </a>
+            <a href="/cleaner/dashboard" style="color:#fff; opacity:0.85; display:block;">
+                &rarr; Open Cleaner Portal View
+            </a>
         </div>
     </aside>
 
     <div class="admin-content">
-        <h2 class="section-title" style="text-align:left; margin-bottom:20px;">
-            Master Cleanliness Control ${statusFilter ? ' — ' + escapeHtml(statusFilter) : ''}
-        </h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+            <h2 class="section-title" style="text-align:left; margin:0;">
+                Master Cleanliness Control ${statusFilter ? ' — ' + escapeHtml(statusFilter) : ''}
+            </h2>
+            <a href="/admin/cleaners" class="btn btn-secondary btn-small">
+                🧹 Manage Cleaners &amp; Areas &rarr;
+            </a>
+        </div>
 
         <div style="overflow-x:auto;">
             <table class="admin-table">
@@ -830,6 +1044,7 @@ const server = http.createServer((req, res) => {
                     <tr>
                         <th>Photo</th>
                         <th>Location</th>
+                        <th>Assigned Cleaner</th>
                         <th class="desc-cell">Description</th>
                         <th>Reporter</th>
                         <th>Date</th>
@@ -874,6 +1089,313 @@ const server = http.createServer((req, res) => {
             });
         }
         res.writeHead(302, { 'Location': '/admin/dashboard' });
+        return res.end();
+    }
+
+    // 10. ADMIN CLEANER MANAGEMENT & AREA ASSIGNMENT MODULE
+    if (pathname === '/admin/cleaners' || pathname === '/admin/cleaners.php') {
+        if (!currentUser || currentUser.role !== 'admin') {
+            res.writeHead(302, { 'Location': '/login' });
+            return res.end();
+        }
+
+        const totalCleaners = data.cleaners.length;
+        const availableCleaners = data.cleaners.filter(c => !c.is_on_leave).length;
+        const onLeaveCleaners = data.cleaners.filter(c => c.is_on_leave).length;
+
+        let cleanerRows = data.cleaners.map(c => {
+            const replacement = c.replacement_cleaner_id ? data.cleaners.find(other => other.cleaner_id === c.replacement_cleaner_id) : null;
+            const otherAvailableCleaners = data.cleaners.filter(other => other.cleaner_id !== c.cleaner_id && !other.is_on_leave);
+
+            return `
+            <tr>
+                <td>
+                    <strong>${escapeHtml(c.name)}</strong><br>
+                    <small style="color:var(--gray-500);">${escapeHtml(c.contact || 'No contact')} &bull; @${escapeHtml(c.username || 'cleaner')}</small>
+                </td>
+                <td>
+                    <form method="POST" action="/admin/cleaners/update_area" style="display:flex; gap:6px; align-items:center;">
+                        <input type="hidden" name="cleaner_id" value="${c.cleaner_id}">
+                        <input type="text" name="assigned_area" value="${escapeHtml(c.assigned_area)}" required
+                               style="padding:6px 10px; font-size:0.85rem; border:1px solid var(--gray-300); border-radius:6px; width:160px;">
+                        <button type="submit" class="btn btn-outline btn-small" style="padding:4px 8px; font-size:0.75rem;" title="Save assigned area">Save</button>
+                    </form>
+                    <small style="color:var(--gray-500); font-size:11px;">Permanent Ward Assignment</small>
+                </td>
+                <td>
+                    ${c.is_on_leave ? `
+                        <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                            <span class="cleaner-badge-leave">🏖️ On Leave</span>
+                            <form method="POST" action="/admin/cleaners/toggle_leave">
+                                <input type="hidden" name="cleaner_id" value="${c.cleaner_id}">
+                                <input type="hidden" name="status" value="available">
+                                <button type="submit" class="btn btn-secondary btn-small" style="font-size:0.75rem; padding:4px 10px; background:#0f764a;">
+                                    Mark Available (Return)
+                                </button>
+                            </form>
+                        </div>
+                    ` : `
+                        <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+                            <span class="cleaner-badge-available">● Available</span>
+                            <form method="POST" action="/admin/cleaners/toggle_leave">
+                                <input type="hidden" name="cleaner_id" value="${c.cleaner_id}">
+                                <input type="hidden" name="status" value="leave">
+                                <button type="submit" class="btn btn-outline btn-small" style="font-size:0.75rem; padding:4px 10px; color:#b45309; border-color:#fde68a; background:#fff8e6;">
+                                    Mark On Leave
+                                </button>
+                            </form>
+                        </div>
+                    `}
+                </td>
+                <td>
+                    ${c.is_on_leave ? `
+                        <div>
+                            <strong>${replacement ? escapeHtml(replacement.name) : '<span style="color:#ef4444;">Not Set</span>'}</strong>
+                            <div style="font-size:11px; color:var(--gray-500); margin-bottom:6px;">
+                                Covering missions for ${escapeHtml(c.assigned_area)}
+                            </div>
+                            <form method="POST" action="/admin/cleaners/set_replacement" style="display:flex; gap:6px; align-items:center;">
+                                <input type="hidden" name="cleaner_id" value="${c.cleaner_id}">
+                                <select name="replacement_cleaner_id" style="padding:4px 8px; font-size:0.8rem; border:1px solid var(--gray-300); border-radius:6px;">
+                                    ${otherAvailableCleaners.map(other => `
+                                        <option value="${other.cleaner_id}" ${c.replacement_cleaner_id === other.cleaner_id ? 'selected' : ''}>
+                                            ${escapeHtml(other.name)} (${escapeHtml(other.assigned_area)})
+                                        </option>
+                                    `).join('')}
+                                </select>
+                                <button type="submit" class="btn btn-secondary btn-small" style="padding:4px 8px; font-size:0.75rem;">Set</button>
+                            </form>
+                        </div>
+                    ` : `
+                        <span style="color:var(--gray-400); font-size:0.85rem;">— (Active on duty)</span>
+                    `}
+                </td>
+            </tr>`;
+        }).join('');
+
+        const html = renderHeader("Cleaner Management", "/", currentUser, "/admin/cleaners") + `
+<div class="admin-shell">
+    <aside class="admin-sidebar">
+        <h3>👑 Municipal Admin</h3>
+        <div class="stat-mini"><span>Total Staff</span><strong>${totalCleaners}</strong></div>
+        <div class="stat-mini"><span>Available</span><strong>${availableCleaners}</strong></div>
+        <div class="stat-mini"><span>On Leave</span><strong>${onLeaveCleaners}</strong></div>
+        <div style="padding:16px 20px;">
+            <a href="/admin/cleaners" style="color:var(--amber-500); font-weight:700; display:block; margin-bottom:10px;">
+                🧹 Cleaner List &amp; Areas
+            </a>
+            <a href="/admin/dashboard" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">
+                📋 Cleanliness Reports
+            </a>
+            <a href="/cleaner/dashboard" style="color:#fff; opacity:0.85; display:block;">
+                &rarr; Open Cleaner View
+            </a>
+        </div>
+    </aside>
+
+    <div class="admin-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+            <div>
+                <h2 class="section-title" style="text-align:left; margin:0 0 4px 0;">
+                    🧹 Cleaner Management &amp; Area Assignments
+                </h2>
+                <p style="color:var(--gray-500); margin:0;">
+                    Manage sanitation staff, assigned wards, leave statuses, and temporary replacement cleaners.
+                </p>
+            </div>
+            <a href="/admin/dashboard" class="btn btn-outline btn-small">
+                &larr; Back to Reports Dashboard
+            </a>
+        </div>
+
+        <div style="overflow-x:auto; background:var(--white); border-radius:var(--radius); border:1px solid var(--gray-200); box-shadow:var(--shadow-sm); margin-bottom:30px;">
+            <table class="admin-table" style="margin:0;">
+                <thead>
+                    <tr>
+                        <th>Cleaner Name</th>
+                        <th>Assigned Area (Permanent)</th>
+                        <th>Leave Status</th>
+                        <th>Temporary Replacement Cleaner</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${cleanerRows}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add New Cleaner Form -->
+        <div class="cleaner-manage-card">
+            <h3 style="margin-top:0; color:var(--green-900);">➕ Register New Cleaner</h3>
+            <p style="color:var(--gray-500); font-size:0.9rem; margin-bottom:16px;">
+                Add a new municipal sanitation worker and assign their designated city ward.
+            </p>
+            <form method="POST" action="/admin/cleaners/add" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)) 120px; gap:12px; align-items:end;">
+                <div>
+                    <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px; color:var(--green-900);">Cleaner Name *</label>
+                    <input type="text" name="name" required placeholder="e.g. Senthil Kumar"
+                           style="width:100%; padding:10px; border:1px solid var(--gray-300); border-radius:8px;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px; color:var(--green-900);">Assigned Area *</label>
+                    <input type="text" name="assigned_area" required placeholder="e.g. Woraiyur"
+                           style="width:100%; padding:10px; border:1px solid var(--gray-300); border-radius:8px;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px; color:var(--green-900);">Contact Number</label>
+                    <input type="text" name="contact" placeholder="e.g. 9876500005"
+                           style="width:100%; padding:10px; border:1px solid var(--gray-300); border-radius:8px;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:4px; color:var(--green-900);">Username</label>
+                    <input type="text" name="username" placeholder="e.g. senthil"
+                           style="width:100%; padding:10px; border:1px solid var(--gray-300); border-radius:8px;">
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-secondary" style="width:100%; padding:10px;">
+                        + Add
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>` + renderFooter();
+
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(html);
+    }
+
+    // 11. ADMIN CLEANER ACTION: TOGGLE LEAVE STATUS
+    if (pathname === '/admin/cleaners/toggle_leave') {
+        if (!currentUser || currentUser.role !== 'admin') {
+            res.writeHead(302, { 'Location': '/login' });
+            return res.end();
+        }
+        if (req.method === 'POST') {
+            return parseBody(req, body => {
+                const cleanerId = parseInt(body.cleaner_id, 10);
+                const targetStatus = body.status; // 'leave' or 'available'
+                const cleaner = data.cleaners.find(c => c.cleaner_id === cleanerId);
+
+                if (cleaner) {
+                    if (targetStatus === 'leave') {
+                        cleaner.is_on_leave = true;
+                        // Auto-assign first available replacement cleaner if none set
+                        if (!cleaner.replacement_cleaner_id) {
+                            const availableCleaner = data.cleaners.find(c => c.cleaner_id !== cleaner.cleaner_id && !c.is_on_leave);
+                            cleaner.replacement_cleaner_id = availableCleaner ? availableCleaner.cleaner_id : null;
+                        }
+                    } else {
+                        // Returning from leave: clear replacement, primary area assignment remains permanently intact
+                        cleaner.is_on_leave = false;
+                        cleaner.replacement_cleaner_id = null;
+                    }
+                    saveData(data);
+                }
+
+                res.writeHead(302, { 'Location': '/admin/cleaners' });
+                return res.end();
+            });
+        }
+        res.writeHead(302, { 'Location': '/admin/cleaners' });
+        return res.end();
+    }
+
+    // 12. ADMIN CLEANER ACTION: SET REPLACEMENT CLEANER
+    if (pathname === '/admin/cleaners/set_replacement') {
+        if (!currentUser || currentUser.role !== 'admin') {
+            res.writeHead(302, { 'Location': '/login' });
+            return res.end();
+        }
+        if (req.method === 'POST') {
+            return parseBody(req, body => {
+                const cleanerId = parseInt(body.cleaner_id, 10);
+                const replacementId = parseInt(body.replacement_cleaner_id, 10);
+                const cleaner = data.cleaners.find(c => c.cleaner_id === cleanerId);
+
+                if (cleaner && cleaner.is_on_leave && replacementId) {
+                    cleaner.replacement_cleaner_id = replacementId;
+                    saveData(data);
+                }
+
+                res.writeHead(302, { 'Location': '/admin/cleaners' });
+                return res.end();
+            });
+        }
+        res.writeHead(302, { 'Location': '/admin/cleaners' });
+        return res.end();
+    }
+
+    // 13. ADMIN CLEANER ACTION: UPDATE ASSIGNED AREA
+    if (pathname === '/admin/cleaners/update_area') {
+        if (!currentUser || currentUser.role !== 'admin') {
+            res.writeHead(302, { 'Location': '/login' });
+            return res.end();
+        }
+        if (req.method === 'POST') {
+            return parseBody(req, body => {
+                const cleanerId = parseInt(body.cleaner_id, 10);
+                const newArea = (body.assigned_area || '').trim();
+                const cleaner = data.cleaners.find(c => c.cleaner_id === cleanerId);
+
+                if (cleaner && newArea) {
+                    cleaner.assigned_area = newArea;
+                    saveData(data);
+                }
+
+                res.writeHead(302, { 'Location': '/admin/cleaners' });
+                return res.end();
+            });
+        }
+        res.writeHead(302, { 'Location': '/admin/cleaners' });
+        return res.end();
+    }
+
+    // 14. ADMIN CLEANER ACTION: ADD CLEANER
+    if (pathname === '/admin/cleaners/add') {
+        if (!currentUser || currentUser.role !== 'admin') {
+            res.writeHead(302, { 'Location': '/login' });
+            return res.end();
+        }
+        if (req.method === 'POST') {
+            return parseBody(req, body => {
+                const name = (body.name || '').trim();
+                const area = (body.assigned_area || '').trim();
+                const contact = (body.contact || '').trim();
+                const username = (body.username || '').trim() || name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                if (name && area) {
+                    const newId = data.cleaners.length > 0 ? Math.max(...data.cleaners.map(c => c.cleaner_id)) + 1 : 1;
+                    const newCleaner = {
+                        cleaner_id: newId,
+                        username: username,
+                        name: name,
+                        contact: contact,
+                        assigned_area: area,
+                        is_on_leave: false,
+                        replacement_cleaner_id: null
+                    };
+                    data.cleaners.push(newCleaner);
+
+                    // Add user credentials so cleaner can log in
+                    if (!data.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+                        data.users.push({
+                            id: data.users.length > 0 ? Math.max(...data.users.map(u => u.id)) + 1 : 1,
+                            username: username,
+                            password_hash: crypto.createHash('sha256').update('cleaner123').digest('hex'),
+                            role: 'cleaner',
+                            full_name: name
+                        });
+                    }
+
+                    saveData(data);
+                }
+
+                res.writeHead(302, { 'Location': '/admin/cleaners' });
+                return res.end();
+            });
+        }
+        res.writeHead(302, { 'Location': '/admin/cleaners' });
         return res.end();
     }
 

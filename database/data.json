@@ -30,7 +30,105 @@
       "full_name": "Municipal Administrator"
     }
   ],
+  "cleaners": [
+    {
+      "cleaner_id": 1,
+      "username": "cleaner",
+      "name": "Ramesh Kumar",
+      "contact": "9876500001",
+      "assigned_area": "Anna Nagar",
+      "is_on_leave": false,
+      "replacement_cleaner_id": null
+    },
+    {
+      "cleaner_id": 2,
+      "username": "suresh",
+      "name": "Suresh Babu",
+      "contact": "9876500002",
+      "assigned_area": "Gandhi Park",
+      "is_on_leave": false,
+      "replacement_cleaner_id": null
+    },
+    {
+      "cleaner_id": 3,
+      "username": "murugan",
+      "name": "Murugan S",
+      "contact": "9876500003",
+      "assigned_area": "Cantonment",
+      "is_on_leave": true,
+      "replacement_cleaner_id": 1
+    },
+    {
+      "cleaner_id": 4,
+      "username": "karthik",
+      "name": "Karthik V",
+      "contact": "9876500004",
+      "assigned_area": "Thillai Nagar",
+      "is_on_leave": false,
+      "replacement_cleaner_id": null
+    }
+  ],
   "reports": [
+    {
+      "report_id": 8,
+      "reporter_name": "TestUser4",
+      "reporter_contact": "9999999994",
+      "description": "Litter on sidewalk",
+      "location_area": "Anna Nagar Main Road",
+      "latitude": null,
+      "longitude": null,
+      "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
+      "status": "Pending",
+      "assigned_cleaner_id": 1,
+      "assigned_cleaner_name": "Ramesh Kumar",
+      "assignment_type": "Primary",
+      "submitted_at": "2026-09-02T14:25:54.538Z"
+    },
+    {
+      "report_id": 7,
+      "reporter_name": "TestUser3",
+      "reporter_contact": "9999999993",
+      "description": "Vegetable waste",
+      "location_area": "Anna Nagar Market",
+      "latitude": null,
+      "longitude": null,
+      "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
+      "status": "Pending",
+      "assigned_cleaner_id": 2,
+      "assigned_cleaner_name": "Suresh Babu",
+      "assignment_type": "Replacement",
+      "submitted_at": "2026-09-02T14:25:54.529Z"
+    },
+    {
+      "report_id": 6,
+      "reporter_name": "TestUser2",
+      "reporter_contact": "9999999992",
+      "description": "Plastic waste near signal",
+      "location_area": "Cantonment Roundabout",
+      "latitude": null,
+      "longitude": null,
+      "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
+      "status": "Pending",
+      "assigned_cleaner_id": 1,
+      "assigned_cleaner_name": "Ramesh Kumar",
+      "assignment_type": "Replacement",
+      "submitted_at": "2026-09-02T14:25:54.519Z"
+    },
+    {
+      "report_id": 5,
+      "reporter_name": "TestUser1",
+      "reporter_contact": "9999999991",
+      "description": "Overflowing trash bin",
+      "location_area": "Anna Nagar West Circle",
+      "latitude": null,
+      "longitude": null,
+      "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
+      "status": "Pending",
+      "assigned_cleaner_id": 1,
+      "assigned_cleaner_name": "Ramesh Kumar",
+      "assignment_type": "Primary",
+      "submitted_at": "2026-09-02T14:25:54.514Z"
+    },
     {
       "report_id": 4,
       "reporter_name": "yogi",
@@ -41,6 +139,9 @@
       "longitude": null,
       "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
       "status": "Pending",
+      "assigned_cleaner_id": null,
+      "assigned_cleaner_name": "Unassigned",
+      "assignment_type": "Unassigned",
       "submitted_at": "2026-08-25T05:14:10.252Z"
     },
     {
@@ -52,8 +153,12 @@
       "latitude": 10.8231,
       "longitude": 78.6869,
       "photo_path": "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=500&auto=format&fit=crop&q=60",
-      "status": "Pending",
-      "submitted_at": "2026-08-23T05:10:56.404Z"
+      "status": "In Progress",
+      "assigned_cleaner_id": 1,
+      "assigned_cleaner_name": "Ramesh Kumar",
+      "assignment_type": "Primary",
+      "submitted_at": "2026-08-23T05:10:56.404Z",
+      "updated_at": "2026-08-31T06:32:37.312Z"
     },
     {
       "report_id": 2,
@@ -65,6 +170,9 @@
       "longitude": 78.7047,
       "photo_path": "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&auto=format&fit=crop&q=60",
       "status": "In Progress",
+      "assigned_cleaner_id": 2,
+      "assigned_cleaner_name": "Suresh Babu",
+      "assignment_type": "Primary",
       "submitted_at": "2026-08-24T05:10:56.406Z"
     },
     {
@@ -77,6 +185,9 @@
       "longitude": 78.6892,
       "photo_path": "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=500&auto=format&fit=crop&q=60",
       "status": "Cleaned",
+      "assigned_cleaner_id": 1,
+      "assigned_cleaner_name": "Ramesh Kumar",
+      "assignment_type": "Replacement",
       "submitted_at": "2026-08-22T05:10:56.406Z"
     }
   ]

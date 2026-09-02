@@ -43,13 +43,19 @@ require_once '../includes/header.php';
             <a href="?status=Pending" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">Pending</a>
             <a href="?status=In+Progress" style="color:#fff; opacity:0.85; display:block; margin-bottom:8px;">In Progress</a>
             <a href="?status=Cleaned" style="color:#fff; opacity:0.85; display:block;">Cleaned</a>
+            <hr style="border:0; border-top:1px solid rgba(255,255,255,0.15); margin:16px 0;">
+            <a href="cleaners.php" style="color:var(--amber-500); font-weight:700; display:block; margin-bottom:8px;">🧹 Manage Cleaners &amp; Areas</a>
+            <a href="../cleaner.php" style="color:#fff; opacity:0.85; display:block;">&rarr; Open Cleaner Portal</a>
         </div>
     </aside>
 
     <div class="admin-content">
-        <h2 class="section-title" style="text-align:left; margin-bottom:20px;">
-            Manage Reports <?php echo $statusFilter ? ' — ' . htmlspecialchars($statusFilter) : ''; ?>
-        </h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+            <h2 class="section-title" style="text-align:left; margin:0;">
+                Manage Reports <?php echo $statusFilter ? ' — ' . htmlspecialchars($statusFilter) : ''; ?>
+            </h2>
+            <a href="cleaners.php" class="btn btn-secondary btn-small">🧹 Cleaners &amp; Areas &rarr;</a>
+        </div>
 
         <?php if ($result->num_rows === 0): ?>
             <div class="empty-state">
@@ -63,6 +69,7 @@ require_once '../includes/header.php';
                 <tr>
                     <th>Photo</th>
                     <th>Location</th>
+                    <th>Assigned Cleaner</th>
                     <th class="desc-cell">Description</th>
                     <th>Reporter</th>
                     <th>Date</th>
@@ -77,7 +84,17 @@ require_once '../includes/header.php';
                 <tr>
                     <td><img class="thumb" src="../<?php echo htmlspecialchars($row['photo_path']); ?>" alt="report photo"
                              onerror="this.src='https://via.placeholder.com/70x55/e6f5ee/1a6b4a?text=No+Img'"></td>
-                    <td><?php echo htmlspecialchars($row['location_area']); ?></td>
+                    <td><strong><?php echo htmlspecialchars($row['location_area']); ?></strong></td>
+                    <td>
+                        <strong><?php echo htmlspecialchars($row['assigned_cleaner_name'] ?: 'Unassigned'); ?></strong><br>
+                        <?php if ($row['assignment_type'] === 'Primary'): ?>
+                            <span class="assignment-badge-primary">Primary</span>
+                        <?php elseif ($row['assignment_type'] === 'Replacement'): ?>
+                            <span class="assignment-badge-replacement">Temporary Replacement</span>
+                        <?php else: ?>
+                            <span style="font-size:11px; color:#9ca3af;">Unassigned</span>
+                        <?php endif; ?>
+                    </td>
                     <td class="desc-cell"><?php echo htmlspecialchars(mb_strimwidth($row['description'], 0, 90, '...')); ?></td>
                     <td><?php echo htmlspecialchars($row['reporter_name']); ?><br>
                         <small style="color:var(--gray-500);"><?php echo htmlspecialchars($row['reporter_contact']); ?></small></td>
