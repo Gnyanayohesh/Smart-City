@@ -284,9 +284,10 @@ function renderHeader(pageTitle = "", basePath = "/", currentUser = null, curren
 <title>${pageTitle ? pageTitle + " | " : ""}Smart City Cleanliness Reporting System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="/assets/images/logo.png">
 <link rel="stylesheet" href="/assets/css/style.css"><style>${liveCss}</style></head><body>
 <div class="site-noise" aria-hidden="true"></div><header class="site-header"><div class="container header-inner">
-<a class="brand-lockup" href="/" aria-label="CleanCity Trichy home"><span class="brand-symbol">CC</span><span class="brand-copy"><strong>CleanCity</strong><small>TRICHY / CIVIC NETWORK</small></span></a>
+<a class="brand-lockup cursor-target" href="/" aria-label="CleanCity Trichy home"><span class="brand-symbol"><img src="/assets/images/logo.png" alt="CleanCity Logo" class="brand-logo-img"></span><span class="brand-copy"><strong>CleanCity</strong><small>TRICHY / CIVIC NETWORK</small></span></a>
 <div class="header-status"><span class="status-dot"></span> PUBLIC SERVICE / LIVE</div><nav class="site-nav" aria-label="Primary navigation">
 <a href="/" class="nav-link ${currentPath === '/' ? 'is-active' : ''}">Overview</a><a href="/report" class="nav-link ${currentPath === '/report' ? 'is-active' : ''}">Report issue</a><a href="/dashboard" class="nav-link ${currentPath === '/dashboard' ? 'is-active' : ''}">Live board</a>
 ${role === 'admin' ? `<a href="/admin/dashboard" class="nav-link ${currentPath.startsWith('/admin') ? 'is-active' : ''}">Admin</a><a href="/logout" class="nav-link nav-logout-pill">Exit</a>` : role === 'cleaner' ? `<a href="/cleaner/dashboard" class="nav-link ${currentPath.startsWith('/cleaner') ? 'is-active' : ''}">My missions</a><a href="/logout" class="nav-link nav-logout-pill">Exit</a>` : role === 'user' ? `<span class="nav-user">/ ${escapeHtml(userName || 'Citizen')}</span><a href="/logout" class="nav-link nav-logout-pill">Exit</a>` : `<a href="/login" class="nav-link ${currentPath === '/login' ? 'is-active' : ''}">Sign in</a>`}

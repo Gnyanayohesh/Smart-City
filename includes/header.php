@@ -14,14 +14,15 @@ $base = isset($basePath) ? $basePath : '';
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="<?php echo $base; ?>assets/images/logo.png">
 <link rel="stylesheet" href="<?php echo $base; ?>assets/css/style.css">
 </head>
 <body>
 <div class="site-noise" aria-hidden="true"></div>
 <header class="site-header">
     <div class="container header-inner">
-        <a class="brand-lockup" href="<?php echo $base; ?>index.php" aria-label="CleanCity Trichy home">
-            <span class="brand-symbol">CC</span>
+        <a class="brand-lockup cursor-target" href="<?php echo $base; ?>index.php" aria-label="CleanCity Trichy home">
+            <span class="brand-symbol"><img src="<?php echo $base; ?>assets/images/logo.png" alt="CleanCity Logo" class="brand-logo-img"></span>
             <span class="brand-copy"><strong>CleanCity</strong><small>TRICHY / CIVIC NETWORK</small></span>
         </a>
         <div class="header-status"><span class="status-dot"></span> PUBLIC SERVICE / LIVE</div>
