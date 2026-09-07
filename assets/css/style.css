@@ -930,3 +930,169 @@ body.target-cursor-active * {
   border-right: none;
   border-top: none;
 }
+
+
+/* ============================================================
+   Monochromatic Design System
+   Graphite, slate, paper, and white — no accent colors.
+   ============================================================ */
+:root {
+    --green-900: #111214;
+    --green-700: #2b2e33;
+    --green-600: #454950;
+    --green-500: #6b7078;
+    --green-100: #e7e8ea;
+    --amber-500: #f1f1f1;
+    --amber-100: #e9eaec;
+    --blue-500: #555a62;
+    --blue-100: #e1e3e6;
+    --red-500: #292c31;
+    --gray-900: #16181b;
+    --gray-700: #454950;
+    --gray-500: #737880;
+    --gray-300: #c5c8cd;
+    --gray-100: #f2f3f4;
+    --white: #ffffff;
+    --radius: 12px;
+    --shadow: 0 8px 24px rgba(17, 18, 20, 0.07);
+    --shadow-lg: 0 18px 45px rgba(17, 18, 20, 0.14);
+}
+
+body {
+    background: #f2f3f4;
+    color: #16181b;
+    letter-spacing: 0.005em;
+}
+
+/* Header and navigation */
+.site-header {
+    background: linear-gradient(135deg, #111214 0%, #292c31 100%);
+    border-bottom: 1px solid #4a4d53;
+    box-shadow: 0 8px 26px rgba(17, 18, 20, 0.22);
+}
+.pill-nav-items,
+.pill-logo,
+.mobile-menu-button {
+    background: rgba(17, 18, 20, 0.88);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+.pill { background: #f7f7f8; color: #16181b !important; }
+.pill:hover,
+.pill.is-active { background: #bfc2c7; color: #111214 !important; box-shadow: none; }
+.pill.is-active::after { background: #111214; }
+.pill.nav-logout-pill,
+.pill.nav-logout-pill:hover { background: #3a3d43; color: #ffffff !important; }
+.mobile-menu-popover { background: #1b1d21; border-color: #555960; }
+.mobile-menu-popover .mobile-menu-link,
+.mobile-menu-popover .mobile-menu-link:hover,
+.mobile-menu-popover .mobile-menu-link:active,
+.mobile-menu-popover .mobile-menu-link.is-active {
+    background: #f4f4f5 !important;
+    color: #16181b !important;
+}
+.mobile-menu-popover .mobile-menu-link:hover,
+.mobile-menu-popover .mobile-menu-link:active,
+.mobile-menu-popover .mobile-menu-link.is-active { background: #c5c8cd !important; }
+
+/* Hero */
+.hero {
+    background: radial-gradient(circle at 50% 20%, #3a3d43 0%, #111214 72%);
+}
+.hero .btn-primary,
+.hero .btn-primary:hover {
+    background: #f4f4f5;
+    color: #111214;
+    border-color: #ffffff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+.hero .btn-outline { background: rgba(255,255,255,0.08); border-color: #c5c8cd; color: #ffffff; }
+.hero .btn-outline:hover { background: rgba(255,255,255,0.2); border-color: #ffffff; }
+
+/* Buttons and content */
+.btn-primary { background: #2b2e33; color: #ffffff; }
+.btn-primary:hover { background: #111214; }
+.btn-secondary { background: #555a62; color: #ffffff; }
+.btn-secondary:hover { background: #2b2e33; }
+.btn-danger { background: #292c31; color: #ffffff; }
+.btn-outline { color: #2b2e33; border-color: #737880; }
+.btn-outline:hover { background: #e1e3e6; color: #111214; }
+.section-title,
+.form-card h2,
+.tilted-card-overlay h3,
+.info-card h3 { color: #111214; }
+.section-subtitle,
+.form-group .hint { color: #737880; }
+
+/* Cards and controls */
+.stats-bar,
+.form-card,
+.filter-bar,
+.report-card,
+.info-card,
+.tilted-card-inner,
+.cleaner-manage-card,
+.role-badge-card,
+.admin-table { border: 1px solid #d6d8dc; box-shadow: var(--shadow); }
+.tilted-card-inner { background: #ffffff; }
+.tilted-card-figure:hover .tilted-card-inner { border-color: #737880; box-shadow: var(--shadow-lg); }
+.tilted-card-caption { background: #111214; }
+.stat .num,
+.report-card .location { color: #2b2e33; }
+.report-card .desc { color: #454950; }
+.report-card img,
+.admin-table img.thumb { filter: grayscale(100%) contrast(0.96); }
+
+input[type=text], input[type=tel], input[type=email], input[type=number],
+input[type=password], input[type=file], textarea, select {
+    color: #16181b;
+    background: #ffffff;
+    border-color: #c5c8cd;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: #454950;
+    box-shadow: 0 0 0 3px rgba(69, 73, 80, 0.14);
+}
+.alert-success { background: #e7e8ea; color: #292c31; border-color: #737880; }
+.alert-error { background: #e1e3e6; color: #292c31; border-color: #555a62; }
+
+/* Neutral status language */
+.badge-Pending,
+.badge-InProgress,
+.badge-In-Progress,
+.badge-Cleaned {
+    background: #e1e3e6;
+    color: #292c31;
+    border: 1px solid #b7bac0;
+}
+table.admin-table th { background: #e1e3e6; color: #16181b; }
+table.admin-table th, table.admin-table td { border-bottom-color: #e1e3e6; }
+
+/* Admin and cleaner workspaces */
+.admin-sidebar { background: #16181b; }
+.cleaner-header-banner { background: linear-gradient(135deg, #16181b 0%, #454950 100%); box-shadow: 0 12px 32px rgba(17,18,20,0.18); }
+.cleaner-btn-progress,
+.cleaner-btn-clean,
+.cleaner-badge-available,
+.cleaner-badge-leave,
+.assignment-badge-primary,
+.assignment-badge-replacement,
+.leave-alert-banner {
+    background: #e1e3e6;
+    color: #292c31;
+    border-color: #aeb2b8;
+}
+.role-badge-card { background: #f7f7f8; border-color: #d6d8dc; }
+.role-badge-card:hover,
+.role-badge-card.is-selected { background: #ffffff; border-color: #555a62; box-shadow: var(--shadow-lg); }
+.role-badge-card .role-title { color: #16181b; }
+.role-badge-card .role-creds { background: #e1e3e6; color: #292c31; }
+.site-footer { background: #111214; color: #ffffff; }
+.footer-sdg { color: #c5c8cd; }
+
+/* Keep the visual language monochromatic even for native media and links. */
+a { color: #454950; }
+a:hover { color: #111214; }
+img { filter: grayscale(100%); }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
