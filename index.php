@@ -9,77 +9,38 @@ $cleaned = $conn->query("SELECT COUNT(*) c FROM reports WHERE status='Cleaned'")
 
 require_once 'includes/header.php';
 ?>
-
-<section class="hero">
-    <div id="galaxyBg" class="galaxy-container"></div>
-    <div class="container">
-        <h1>Keep Our City Clean, Together</h1>
-        <p>Spot an unclean public area? Report it in seconds &mdash; with a photo and location &mdash; and track how the municipal team resolves it.</p>
-        <div class="hero-actions">
-            <a href="report.php" class="btn btn-primary">📸 Report an Issue</a>
-            <a href="dashboard.php" class="btn btn-outline">📊 View Public Dashboard</a>
+<section class="landing-hero">
+    <div class="hero-grid-lines" aria-hidden="true"></div>
+    <div class="container landing-hero-inner">
+        <div class="eyebrow"><span class="eyebrow-index">001</span> CIVIC CLEANLINESS / TIRUCHIRAPPALLI</div>
+        <h1>Make the<br><em>invisible</em> visible.</h1>
+        <div class="hero-bottomline">
+            <p>One photo. One location. One accountable response. CleanCity turns everyday observations into a public record of action.</p>
+            <div class="hero-actions"><a href="report.php" class="btn btn-primary">Start a report <span>↗</span></a><a href="dashboard.php" class="text-link">Explore live board <span>→</span></a></div>
         </div>
     </div>
 </section>
 
-<div class="container">
-    <div class="stats-bar">
-        <div class="stat"><div class="num"><?php echo $total; ?></div><div class="label">Total Reports</div></div>
-        <div class="stat"><div class="num"><?php echo $pending; ?></div><div class="label">Pending</div></div>
-        <div class="stat"><div class="num"><?php echo $progress; ?></div><div class="label">In Progress</div></div>
-        <div class="stat"><div class="num"><?php echo $cleaned; ?></div><div class="label">Cleaned</div></div>
+<section class="signal-strip">
+    <div class="container signal-grid">
+        <div class="signal-intro"><span class="section-number">/ 02</span><strong>THE CITY, IN SIGNALS</strong><p>Every report is a data point. Every resolution is visible.</p></div>
+        <div class="signal-stat"><span class="stat-label">ALL REPORTS</span><strong><?php echo $total; ?></strong><span class="stat-rule"></span></div>
+        <div class="signal-stat"><span class="stat-label">PENDING</span><strong><?php echo $pending; ?></strong><span class="stat-rule"></span></div>
+        <div class="signal-stat"><span class="stat-label">IN PROGRESS</span><strong><?php echo $progress; ?></strong><span class="stat-rule"></span></div>
+        <div class="signal-stat"><span class="stat-label">RESOLVED</span><strong><?php echo $cleaned; ?></strong><span class="stat-rule"></span></div>
     </div>
-</div>
+</section>
 
-<section class="section">
+<section class="section process-section">
     <div class="container">
-        <h2 class="section-title">How It Works</h2>
-        <p class="section-subtitle">A simple 3-step process to report and resolve civic cleanliness issues</p>
-        <div class="grid-3">
-            <figure class="tilted-card-figure">
-                <div class="tilted-card-inner">
-                    <div class="tilted-card-overlay">
-                        <span class="icon">📷</span>
-                        <h3>1. Report</h3>
-                        <p>Upload a photo of the unclean spot, add the location and a short description.</p>
-                    </div>
-                </div>
-                <figcaption class="tilted-card-caption">Step 1: Citizen Submission</figcaption>
-            </figure>
-            <figure class="tilted-card-figure">
-                <div class="tilted-card-inner">
-                    <div class="tilted-card-overlay">
-                        <span class="icon">🗂️</span>
-                        <h3>2. Verify</h3>
-                        <p>Municipal administrators review the report and assign it for cleaning.</p>
-                    </div>
-                </div>
-                <figcaption class="tilted-card-caption">Step 2: Admin Verification</figcaption>
-            </figure>
-            <figure class="tilted-card-figure">
-                <div class="tilted-card-inner">
-                    <div class="tilted-card-overlay">
-                        <span class="icon">✅</span>
-                        <h3>3. Resolve</h3>
-                        <p>Once cleaned, the status updates publicly so everyone can see progress.</p>
-                    </div>
-                </div>
-                <figcaption class="tilted-card-caption">Step 3: Public Resolution</figcaption>
-            </figure>
+        <div class="section-heading"><span class="section-number">/ 03</span><h2>From observation<br>to resolution.</h2><p>A simple civic loop designed to keep everyone informed.</p></div>
+        <div class="process-grid">
+            <article class="process-card"><span class="process-index">01</span><span class="process-icon">+</span><h3>Report</h3><p>Capture the issue with a photo, a location, and a clear description.</p><a href="report.php">Submit evidence <span>↗</span></a></article>
+            <article class="process-card process-card-dark"><span class="process-index">02</span><span class="process-icon">◎</span><h3>Route</h3><p>The municipal team verifies the report and routes it to the right cleaner.</p><a href="dashboard.php">See the network <span>↗</span></a></article>
+            <article class="process-card"><span class="process-index">03</span><span class="process-icon">✓</span><h3>Resolve</h3><p>Progress is updated publicly, so a clean result is shared by everyone.</p><a href="login.php">Access portal <span>↗</span></a></article>
         </div>
     </div>
 </section>
 
-<section class="section" style="background:var(--white); padding-top:10px;">
-    <div class="container" style="text-align:center;">
-        <h2 class="section-title">Supporting SDG 11</h2>
-        <p class="section-subtitle" style="max-width:700px; margin-left:auto; margin-right:auto;">
-            This platform contributes to Sustainable Development Goal 11: Sustainable Cities and Communities,
-            by encouraging active citizen participation and improving transparency between the public and the
-            municipal sanitation department.
-        </p>
-        <a href="report.php" class="btn btn-secondary">Submit Your First Report</a>
-    </div>
-</section>
-
+<section class="manifesto-section"><div class="container manifesto-inner"><span class="section-number">/ 04</span><p>“A clean street is not just a service delivered. It is a promise kept in public.”</p><a href="report.php" class="btn btn-secondary">Add your signal <span>↗</span></a></div></section>
 <?php require_once 'includes/footer.php'; ?>

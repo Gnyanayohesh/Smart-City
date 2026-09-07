@@ -278,89 +278,21 @@ function renderHeader(pageTitle = "", basePath = "/", currentUser = null, curren
     const role = currentUser ? currentUser.role : null;
     const userName = currentUser ? currentUser.full_name : '';
     let liveCss = cachedCss;
-    try {
-        if (fs.existsSync(CSS_FILE)) {
-            liveCss = fs.readFileSync(CSS_FILE, 'utf8');
-        }
-    } catch (e) {}
-
+    try { if (fs.existsSync(CSS_FILE)) liveCss = fs.readFileSync(CSS_FILE, 'utf8'); } catch (e) {}
     return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${pageTitle ? pageTitle + " | " : ""}Smart City Cleanliness Reporting System</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/style.css">
-<style>
-/* Embedded Styles to ensure 100% reliable rendering anywhere */
-${liveCss}
-
-body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css"><style>${liveCss}</style></head><body>
+<div class="site-noise" aria-hidden="true"></div><header class="site-header"><div class="container header-inner">
+<a class="brand-lockup" href="/" aria-label="CleanCity Trichy home"><span class="brand-symbol">CC</span><span class="brand-copy"><strong>CleanCity</strong><small>TRICHY / CIVIC NETWORK</small></span></a>
+<div class="header-status"><span class="status-dot"></span> PUBLIC SERVICE / LIVE</div><nav class="site-nav" aria-label="Primary navigation">
+<a href="/" class="nav-link ${currentPath === '/' ? 'is-active' : ''}">Overview</a><a href="/report" class="nav-link ${currentPath === '/report' ? 'is-active' : ''}">Report issue</a><a href="/dashboard" class="nav-link ${currentPath === '/dashboard' ? 'is-active' : ''}">Live board</a>
+${role === 'admin' ? `<a href="/admin/dashboard" class="nav-link ${currentPath.startsWith('/admin') ? 'is-active' : ''}">Admin</a><a href="/logout" class="nav-link nav-logout-pill">Exit</a>` : role === 'cleaner' ? `<a href="/cleaner/dashboard" class="nav-link ${currentPath.startsWith('/cleaner') ? 'is-active' : ''}">My missions</a><a href="/logout" class="nav-link nav-logout-pill">Exit</a>` : role === 'user' ? `<span class="nav-user">/ ${escapeHtml(userName || 'Citizen')}</span><a href="/logout" class="nav-link nav-logout-pill">Exit</a>` : `<a href="/login" class="nav-link ${currentPath === '/login' ? 'is-active' : ''}">Sign in</a>`}
+</nav><button class="mobile-menu-button" id="mobileMenuBtn" aria-label="Toggle menu" type="button" aria-expanded="false"><span></span><span></span></button></div>
+<div class="mobile-menu-popover" id="mobileMenuPopover" aria-hidden="true"><a href="/" class="mobile-menu-link">Overview</a><a href="/report" class="mobile-menu-link">Report issue</a><a href="/dashboard" class="mobile-menu-link">Live board</a>${role === 'admin' ? '<a href="/admin/dashboard" class="mobile-menu-link">Admin</a>' : ''}${role === 'cleaner' ? '<a href="/cleaner/dashboard" class="mobile-menu-link">My missions</a>' : ''}${role ? '<a href="/logout" class="mobile-menu-link">Exit session</a>' : '<a href="/login" class="mobile-menu-link">Sign in</a>'}</div></header><main>`;
 }
-</style>
-</head>
-<body>
-<header class="site-header">
-    <div id="headerGalaxyBg" class="galaxy-container header-galaxy"></div>
-    <div class="container header-inner">
-        <div class="pill-nav-container">
-            <nav class="pill-nav" aria-label="Primary">
-                <a href="/" class="pill-logo cursor-target" aria-label="Home">
-                    <span class="logo-emoji">🏙️</span>
-                    <span>CleanCity <small style="font-weight:400; opacity:0.85; font-size:0.8rem;">Trichy</small></span>
-                </a>
-                <div class="pill-nav-items desktop-only">
-                    <ul class="pill-list" role="menubar">
-                        <li><a href="/" class="pill cursor-target ${currentPath === '/' ? 'is-active' : ''}">Home</a></li>
-                        <li><a href="/report" class="pill cursor-target ${currentPath === '/report' ? 'is-active' : ''}">Report Issue</a></li>
-                        <li><a href="/dashboard" class="pill cursor-target ${currentPath === '/dashboard' ? 'is-active' : ''}">Public Dashboard</a></li>
-                        
-                        ${role === 'admin'
-                            ? `<li><a href="/admin/dashboard" class="pill cursor-target ${currentPath.startsWith('/admin') ? 'is-active' : ''}">👑 Admin Panel</a></li>
-                               <li><a href="/logout" class="pill cursor-target nav-logout-pill">Logout</a></li>`
-                            : role === 'cleaner'
-                            ? `<li><a href="/cleaner/dashboard" class="pill cursor-target ${currentPath.startsWith('/cleaner') ? 'is-active' : ''}">🧹 Cleaner Portal</a></li>
-                               <li><a href="/logout" class="pill cursor-target nav-logout-pill">Logout (Cleaner)</a></li>`
-                            : role === 'user'
-                            ? `<li><a href="/dashboard" class="pill cursor-target">👤 ${escapeHtml(userName || 'Citizen')}</a></li>
-                               <li><a href="/logout" class="pill cursor-target nav-logout-pill">Logout</a></li>`
-                            : `<li><a href="/login" class="pill cursor-target ${currentPath === '/login' ? 'is-active' : ''}">Login</a></li>`
-                        }
-                    </ul>
-                </div>
-                <button class="mobile-menu-button mobile-only cursor-target" id="mobileMenuBtn" aria-label="Toggle menu" type="button" aria-expanded="false">
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                </button>
-            </nav>
-            <div class="mobile-menu-popover mobile-only" id="mobileMenuPopover" aria-hidden="true">
-                <ul class="mobile-menu-list">
-                    <li><a href="/" class="mobile-menu-link cursor-target ${currentPath === '/' ? 'is-active' : ''}">🏠 Home</a></li>
-                    <li><a href="/report" class="mobile-menu-link cursor-target ${currentPath === '/report' ? 'is-active' : ''}">📸 Report Issue</a></li>
-                    <li><a href="/dashboard" class="mobile-menu-link cursor-target ${currentPath === '/dashboard' ? 'is-active' : ''}">📊 Public Dashboard</a></li>
-                    
-                    ${role === 'admin'
-                        ? `<li><a href="/admin/dashboard" class="mobile-menu-link cursor-target ${currentPath.startsWith('/admin') ? 'is-active' : ''}">👑 Admin Panel</a></li>
-                           <li><a href="/logout" class="mobile-menu-link cursor-target" style="background:#ffe3e3; color:#d64545 !important;">🚪 Logout</a></li>`
-                        : role === 'cleaner'
-                        ? `<li><a href="/cleaner/dashboard" class="mobile-menu-link cursor-target ${currentPath.startsWith('/cleaner') ? 'is-active' : ''}">🧹 Cleaner Portal</a></li>
-                           <li><a href="/logout" class="mobile-menu-link cursor-target" style="background:#ffe3e3; color:#d64545 !important;">🚪 Logout (Cleaner)</a></li>`
-                        : role === 'user'
-                        ? `<li><a href="/logout" class="mobile-menu-link cursor-target" style="background:#ffe3e3; color:#d64545 !important;">🚪 Logout (${escapeHtml(userName || 'Citizen')})</a></li>`
-                        : `<li><a href="/login" class="mobile-menu-link cursor-target ${currentPath === '/login' ? 'is-active' : ''}">🔑 Login</a></li>`
-                    }
-                </ul>
-            </div>
-        </div>
-    </div>
-</header>
-<main>`;
-}
-
 function renderFooter() {
     const year = new Date().getFullYear();
     return `</main>
@@ -466,77 +398,10 @@ const server = http.createServer((req, res) => {
         const cleaned = data.reports.filter(r => r.status === 'Cleaned').length;
 
         const html = renderHeader("Home", "/", currentUser, "/") + `
-<section class="hero">
-    <div id="galaxyBg" class="galaxy-container"></div>
-    <div class="container">
-        <h1>Clean Communities Start with You</h1>
-        <p>Spot civic cleanliness issues in Tiruchirappalli? Snap a photo, report the location, and track municipal sanitation resolution in real time.</p>
-        <div class="hero-actions">
-            <a href="/report" class="btn btn-primary">📸 Report an Unclean Area</a>
-            <a href="/dashboard" class="btn btn-outline">View Public Dashboard &rarr;</a>
-        </div>
-    </div>
-</section>
-
-<div class="container">
-    <div class="stats-bar">
-        <div class="stat"><div class="num">${total}</div><div class="label">Total Reports</div></div>
-        <div class="stat"><div class="num">${pending}</div><div class="label">Pending</div></div>
-        <div class="stat"><div class="num">${progress}</div><div class="label">In Progress</div></div>
-        <div class="stat"><div class="num">${cleaned}</div><div class="label">Cleaned</div></div>
-    </div>
-</div>
-
-<section class="section">
-    <div class="container">
-        <h2 class="section-title">How It Works</h2>
-        <p class="section-subtitle">A simple 3-step process to report and resolve civic cleanliness issues</p>
-        <div class="grid-3">
-            <figure class="tilted-card-figure">
-                <div class="tilted-card-inner">
-                    <div class="tilted-card-overlay">
-                        <span class="icon">📷</span>
-                        <h3>1. Report</h3>
-                        <p>Upload a photo of the unclean spot, add the location and a short description.</p>
-                    </div>
-                </div>
-                <figcaption class="tilted-card-caption">Step 1: Citizen Submission</figcaption>
-            </figure>
-            <figure class="tilted-card-figure">
-                <div class="tilted-card-inner">
-                    <div class="tilted-card-overlay">
-                        <span class="icon">🗂️</span>
-                        <h3>2. Verify</h3>
-                        <p>Municipal administrators review the report and assign it for cleaning.</p>
-                    </div>
-                </div>
-                <figcaption class="tilted-card-caption">Step 2: Admin Verification</figcaption>
-            </figure>
-            <figure class="tilted-card-figure">
-                <div class="tilted-card-inner">
-                    <div class="tilted-card-overlay">
-                        <span class="icon">✅</span>
-                        <h3>3. Resolve</h3>
-                        <p>Once cleaned, the status updates publicly so everyone can see progress.</p>
-                    </div>
-                </div>
-                <figcaption class="tilted-card-caption">Step 3: Public Resolution</figcaption>
-            </figure>
-        </div>
-    </div>
-</section>
-
-<section class="section" style="background:var(--white); padding-top:20px; padding-bottom:50px;">
-    <div class="container" style="text-align:center;">
-        <h2 class="section-title">Supporting SDG 11</h2>
-        <p class="section-subtitle" style="max-width:700px; margin-left:auto; margin-right:auto;">
-            This platform contributes to Sustainable Development Goal 11: Sustainable Cities and Communities,
-            by encouraging active citizen participation and improving transparency between the public and the
-            municipal sanitation department.
-        </p>
-        <a href="/report" class="btn btn-secondary">Submit Your First Report</a>
-    </div>
-</section>
+<section class="landing-hero"><div class="hero-grid-lines" aria-hidden="true"></div><div class="container landing-hero-inner"><div class="eyebrow"><span class="eyebrow-index">001</span> CIVIC CLEANLINESS / TIRUCHIRAPPALLI</div><h1>Make the<br><em>invisible</em> visible.</h1><div class="hero-bottomline"><p>One photo. One location. One accountable response. CleanCity turns everyday observations into a public record of action.</p><div class="hero-actions"><a href="/report" class="btn btn-primary">Start a report <span>↗</span></a><a href="/dashboard" class="text-link">Explore live board <span>→</span></a></div></div></div></section>
+<section class="signal-strip"><div class="container signal-grid"><div class="signal-intro"><span class="section-number">/ 02</span><strong>THE CITY, IN SIGNALS</strong><p>Every report is a data point. Every resolution is visible.</p></div><div class="signal-stat"><span class="stat-label">ALL REPORTS</span><strong>${total}</strong><span class="stat-rule"></span></div><div class="signal-stat"><span class="stat-label">PENDING</span><strong>${pending}</strong><span class="stat-rule"></span></div><div class="signal-stat"><span class="stat-label">IN PROGRESS</span><strong>${progress}</strong><span class="stat-rule"></span></div><div class="signal-stat"><span class="stat-label">RESOLVED</span><strong>${cleaned}</strong><span class="stat-rule"></span></div></div></section>
+<section class="section process-section"><div class="container"><div class="section-heading"><span class="section-number">/ 03</span><h2>From observation<br>to resolution.</h2><p>A simple civic loop designed to keep everyone informed.</p></div><div class="process-grid"><article class="process-card"><span class="process-index">01</span><span class="process-icon">+</span><h3>Report</h3><p>Capture the issue with a photo, a location, and a clear description.</p><a href="/report">Submit evidence <span>↗</span></a></article><article class="process-card process-card-dark"><span class="process-index">02</span><span class="process-icon">◎</span><h3>Route</h3><p>The municipal team verifies the report and routes it to the right cleaner.</p><a href="/dashboard">See the network <span>↗</span></a></article><article class="process-card"><span class="process-index">03</span><span class="process-icon">✓</span><h3>Resolve</h3><p>Progress is updated publicly, so a clean result is shared by everyone.</p><a href="/login">Access portal <span>↗</span></a></article></div></div></section>
+<section class="manifesto-section"><div class="container manifesto-inner"><span class="section-number">/ 04</span><p>“A clean street is not just a service delivered. It is a promise kept in public.”</p><a href="/report" class="btn btn-secondary">Add your signal <span>↗</span></a></div></section>
 ` + renderFooter();
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(html);
