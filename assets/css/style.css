@@ -32,7 +32,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 body::selection { background: var(--ink); color: var(--white); }
-img { display: block; max-width: 100%; filter: grayscale(1); }
+img { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 a:hover { text-decoration: none; }
 button, input, textarea, select { font: inherit; }
@@ -60,7 +60,7 @@ button { color: inherit; }
   transition: transform .25s var(--ease), border-color .25s var(--ease);
 }
 .pill-logo:hover { transform: translateY(-2px); border-color: #aeb2b8; }
-.pill-logo .logo-emoji { filter: grayscale(1); font-size: 17px; }
+.pill-logo .logo-emoji { font-size: 17px; }
 .pill-nav-items { padding: 4px; border: 1px solid #4b4e55; border-radius: 999px; background: #17191c; }
 .pill-list { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
 .pill-list > li { display: flex; }
@@ -131,7 +131,7 @@ main { min-height: 60vh; }
 }
 .tilted-card-figure:hover .tilted-card-inner { border-color: var(--ink); box-shadow: var(--shadow-lg); }
 .tilted-card-overlay { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.tilted-card-overlay .icon { display: grid; place-items: center; width: 64px; height: 64px; margin-bottom: 20px; color: var(--white); background: var(--ink); border-radius: 50%; font-size: 1.6rem; filter: grayscale(1); }
+.tilted-card-overlay .icon { display: grid; place-items: center; width: 64px; height: 64px; margin-bottom: 20px; color: var(--white); background: var(--ink); border-radius: 50%; font-size: 1.6rem; }
 .tilted-card-overlay h3 { margin: 0 0 10px; color: var(--ink); font-size: 1.2rem; letter-spacing: -.03em; }
 .tilted-card-overlay p { margin: 0; color: var(--slate); font-size: .9rem; }
 .tilted-card-caption { display: none; }
@@ -167,7 +167,7 @@ input:focus, textarea:focus, select:focus { background: var(--white); border-col
 .badge { display: inline-flex; align-items: center; width: fit-content; padding: 5px 10px; color: var(--ink); background: var(--paper-2); border: 1px solid var(--line-dark); border-radius: 999px; font-size: .67rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .badge-Pending, .badge-InProgress, .badge-In-Progress, .badge-Cleaned { color: var(--ink); background: var(--paper-2); border-color: var(--line-dark); }
 .empty-state { padding: 70px 20px; color: var(--muted); text-align: center; }
-.empty-state .icon { margin-bottom: 12px; font-size: 2.3rem; filter: grayscale(1); }
+.empty-state .icon { margin-bottom: 12px; font-size: 2.3rem; }
 
 /* Admin and cleaner workspaces */
 .admin-shell { display: flex; min-height: calc(100vh - 88px); }
@@ -187,7 +187,7 @@ table.admin-table .desc-cell { max-width: 240px; color: var(--slate); }
 .role-cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 24px 0; }
 .role-badge-card { padding: 18px 12px; text-align: center; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; transition: transform .2s var(--ease), border-color .2s, background .2s; }
 .role-badge-card:hover, .role-badge-card.is-selected { background: var(--white); border-color: var(--ink); transform: translateY(-3px); }
-.role-badge-card .role-icon { margin-bottom: 7px; font-size: 1.6rem; filter: grayscale(1); }
+.role-badge-card .role-icon { margin-bottom: 7px; font-size: 1.6rem; }
 .role-badge-card .role-title { color: var(--ink); font-size: .82rem; font-weight: 800; }
 .role-badge-card .role-privilege { margin-top: 5px; color: var(--slate); font-size: .7rem; line-height: 1.4; }
 .role-badge-card .role-creds { display: inline-block; margin-top: 10px; padding: 4px 7px; color: var(--ink); background: var(--paper-2); border-radius: 5px; font-size: .64rem; font-weight: 800; }
