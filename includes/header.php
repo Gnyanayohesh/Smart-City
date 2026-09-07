@@ -21,7 +21,7 @@ $base = isset($basePath) ? $basePath : '';
 <div class="site-noise" aria-hidden="true"></div>
 <header class="site-header">
     <div class="container header-inner">
-        <a class="brand-lockup cursor-target" href="<?php echo $base; ?>index.php" aria-label="CleanCity Trichy home">
+        <a class="brand-lockup" href="<?php echo $base; ?>index.php" aria-label="CleanCity Trichy home">
             <span class="brand-symbol"><img src="<?php echo $base; ?>assets/images/logo.png" alt="CleanCity Logo" class="brand-logo-img"></span>
             <span class="brand-copy"><strong>CleanCity</strong><small>TRICHY / CIVIC NETWORK</small></span>
         </a>
