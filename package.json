@@ -17,5 +17,8 @@
     "sdg-11"
   ],
   "author": "CleanCity Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "localtunnel": "^2.0.2"
+  }
 }
